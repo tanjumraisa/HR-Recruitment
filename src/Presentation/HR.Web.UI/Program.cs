@@ -53,6 +53,13 @@ using (var scope = app.Services.CreateScope())
     var seed = builder.Configuration.GetSection("SeedAdmin");
     var users = scope.ServiceProvider.GetRequiredService<IUserFacade>();
     await users.EnsureAdminAsync(seed["FullName"] ?? "System Admin", seed["Email"] ?? "admin@hr.local", seed["Password"] ?? "Admin@12345");
+
+    // While developing: an empty database gets the demo data automatically (24 employees, attendance, payroll...).
+    if (app.Environment.IsDevelopment() && !await db.Employees.AnyAsync())
+    {
+        try { app.Logger.LogInformation(await scope.ServiceProvider.GetRequiredService<IDemoDataFacade>().LoadAsync()); }
+        catch (Exception ex) { app.Logger.LogError(ex, "Demo data could not be loaded."); }
+    }
 }
 
 if (!app.Environment.IsDevelopment())

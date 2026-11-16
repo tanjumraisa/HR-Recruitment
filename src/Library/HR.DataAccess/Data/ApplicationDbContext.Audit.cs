@@ -14,9 +14,12 @@ namespace HR.DataAccess
     {
         private bool _writingAudit;
 
+        // Set to true for bulk inserts (demo data) so no audit rows are written.
+        public bool SkipAudit { get; set; }
+
         public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
         {
-            if (_writingAudit)
+            if (_writingAudit || SkipAudit)
                 return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
 
             var audits = new List<(EntityEntry Entry, string Action, string Changes)>();

@@ -111,6 +111,13 @@ else
     </div>
 
     <div class="dash-wrap">
+        @if (User.IsInRole(RoleNames.Admin))
+        {
+            <form method="post" asp-action="LoadDemoData" class="text-end mb-2 no-print"
+                  onsubmit="return confirm('Load demo data (24 employees, attendance, leave, payroll, jobs)? This runs only once.');">
+                <button class="btn btn-sm btn-warning">Load demo data</button>
+            </form>
+        }
         <form method="get" id="dashFilter"></form>
         <div class="row g-3">
             <div class="col-6 col-xl-2">

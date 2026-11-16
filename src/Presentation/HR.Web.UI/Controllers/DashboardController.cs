@@ -15,8 +15,11 @@ namespace HR.Web.UI.Controllers
         private readonly IReportFacade _reports;
         private readonly IRecordFacade _records;
 
-        public DashboardController(IJobApplicationFacade applicationFacade, IReportFacade reports, IRecordFacade records)
+        private readonly IDemoDataFacade _demo;
+
+        public DashboardController(IJobApplicationFacade applicationFacade, IReportFacade reports, IRecordFacade records, IDemoDataFacade demo)
         {
+            _demo = demo;
             _applicationFacade = applicationFacade;
             _reports = reports;
             _records = records;
@@ -55,6 +58,16 @@ namespace HR.Web.UI.Controllers
                 vm.Results = await _reports.SearchEmployeesAsync(filter);
             }
             return View(vm);
+        }
+
+        // Admin only: fills sample employees, attendance, leave, payroll, jobs... once.
+        [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = RoleNames.AdminOnly)]
+        public async Task<IActionResult> LoadDemoData()
+        {
+            try { TempData["Success"] = await _demo.LoadAsync(); }
+            catch (BusinessException ex) { TempData["Error"] = ex.Message; }
+            catch (Exception ex) { TempData["Error"] = "Demo data could not be loaded: " + (ex.InnerException?.Message ?? ex.Message); }
+            return RedirectToAction(nameof(Index));
         }
     }
 }
