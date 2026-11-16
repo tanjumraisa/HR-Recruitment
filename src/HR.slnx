@@ -1,13 +1,21 @@
 <Solution>
+  <Folder Name="/API/">
+    <Project Path="API/HR.API/HR.API.csproj" />
+  </Folder>
   <Folder Name="/Business/">
-    <Project Path="HR.Facade/HR.Facade.csproj" />
+    <Project Path="Business/HR.Facade/HR.Facade.csproj" />
   </Folder>
   <Folder Name="/Library/">
-    <Project Path="HR.DataAccess/HR.DataAccess.csproj" />
-    <Project Path="HR.Entities/HR.Entities.csproj" />
-    <Project Path="HR.Framework/HR.Framework.csproj" />
+    <Project Path="Library/HR.DataAccess/HR.DataAccess.csproj" />
+    <Project Path="Library/HR.Entities/HR.Entities.csproj" />
+    <Project Path="Library/HR.Framework/HR.Framework.csproj" />
+    <Project Path="Library/HR.Integration/HR.Integration.csproj" />
   </Folder>
   <Folder Name="/Presentation/">
-    <Project Path="HR.Web.UI/HR.Web.UI.csproj" />
+    <Project Path="Presentation/HR.Web.UI/HR.Web.UI.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/HR.Facade.Tests/HR.Facade.Tests.csproj" />
+    <Project Path="Tests/HR.DataAccess.Tests/HR.DataAccess.Tests.csproj" />
   </Folder>
 </Solution>

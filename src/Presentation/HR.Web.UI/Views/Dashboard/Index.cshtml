@@ -1,0 +1,261 @@
+@using System.Globalization
+@model HrmsDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    var f = Model.Filter;
+    var c = Model.Charts;
+    var s = Model.Stats;
+    var inv = CultureInfo.InvariantCulture;
+    string[] palette = { "#ff5a5f", "#7e57c2", "#26a69a", "#ffa726", "#42a5f5", "#ec407a", "#8d6e63", "#66bb6a" };
+    string N(decimal v) => v.ToString("0.##", inv);
+}
+
+@functions {
+    // Vertical bar chart drawn as SVG (no JavaScript library needed).
+    static Microsoft.AspNetCore.Html.IHtmlContent Bars(List<(string Label, int Value)> data, string color)
+    {
+        var max = Math.Max(1, data.Select(d => d.Value).DefaultIfEmpty(0).Max());
+        var step = (int)Math.Ceiling(max / 5.0);
+        var top = step * 5;
+        var sb = new System.Text.StringBuilder("<svg viewBox=\"0 0 380 210\" class=\"w-100\">");
+        for (var i = 0; i <= 5; i++)
+        {
+            var y = 170 - i * 30;
+            sb.Append($"<line x1=\"40\" x2=\"370\" y1=\"{y}\" y2=\"{y}\" stroke=\"#e5e5e5\"/><text x=\"32\" y=\"{y + 4}\" font-size=\"11\" text-anchor=\"end\" fill=\"#555\">{i * step}</text>");
+        }
+        var w = 330.0 / Math.Max(1, data.Count);
+        for (var i = 0; i < data.Count; i++)
+        {
+            var h = data[i].Value * 150.0 / top;
+            var x = 40 + i * w + w * 0.15;
+            sb.Append(System.FormattableString.Invariant($"<rect x=\"{x:0.#}\" y=\"{170 - h:0.#}\" width=\"{w * 0.7:0.#}\" height=\"{h:0.#}\" fill=\"{color}\"><title>{data[i].Label}: {data[i].Value}</title></rect>"));
+            sb.Append(System.FormattableString.Invariant($"<text x=\"{x + w * 0.35:0.#}\" y=\"192\" font-size=\"11\" text-anchor=\"middle\" fill=\"#555\" transform=\"rotate(-18 {x + w * 0.35:0.#} 192)\">{System.Net.WebUtility.HtmlEncode(data[i].Label)}</text>"));
+        }
+        return new Microsoft.AspNetCore.Html.HtmlString(sb.Append("</svg>").ToString());
+    }
+
+    static Microsoft.AspNetCore.Html.IHtmlContent Line(List<(string Label, int Value)> data)
+    {
+        var max = Math.Max(1, data.Select(d => d.Value).DefaultIfEmpty(0).Max());
+        var sb = new System.Text.StringBuilder("<svg viewBox=\"0 0 380 210\" class=\"w-100\">");
+        sb.Append($"<line x1=\"35\" x2=\"370\" y1=\"170\" y2=\"170\" stroke=\"#ccc\"/><line x1=\"35\" x2=\"35\" y1=\"20\" y2=\"170\" stroke=\"#ccc\"/>");
+        sb.Append($"<text x=\"28\" y=\"24\" font-size=\"11\" text-anchor=\"end\" fill=\"#555\">{max}</text><text x=\"28\" y=\"174\" font-size=\"11\" text-anchor=\"end\" fill=\"#555\">0</text>");
+        var step = data.Count > 1 ? 330.0 / (data.Count - 1) : 0;
+        var points = data.Select((d, i) => System.FormattableString.Invariant($"{40 + i * step:0.#},{170 - d.Value * 150.0 / max:0.#}")).ToList();
+        sb.Append($"<polyline fill=\"none\" stroke=\"#ff5a5f\" stroke-width=\"2.5\" points=\"{string.Join(" ", points)}\"/>");
+        for (var i = 0; i < data.Count; i++)
+        {
+            sb.Append(System.FormattableString.Invariant($"<circle cx=\"{40 + i * step:0.#}\" cy=\"{170 - data[i].Value * 150.0 / max:0.#}\" r=\"3.5\" fill=\"#ff5a5f\"><title>{data[i].Label}: {data[i].Value}</title></circle>"));
+            sb.Append(System.FormattableString.Invariant($"<text x=\"{40 + i * step:0.#}\" y=\"190\" font-size=\"10\" text-anchor=\"middle\" fill=\"#555\">{data[i].Label}</text>"));
+        }
+        return new Microsoft.AspNetCore.Html.HtmlString(sb.Append("</svg>").ToString());
+    }
+
+    // Half-circle gauge for a percentage.
+    static Microsoft.AspNetCore.Html.IHtmlContent Gauge(decimal percent, string color)
+    {
+        var p = (double)Math.Clamp(percent, 0, 100) / 100.0;
+        var angle = Math.PI * (1 - p);
+        var x = 100 + 80 * Math.Cos(angle);
+        var y = 100 - 80 * Math.Sin(angle);
+        var arc = p <= 0 ? "" : System.FormattableString.Invariant($"<path d=\"M20 100 A80 80 0 0 1 {x:0.##} {y:0.##}\" fill=\"none\" stroke=\"{color}\" stroke-width=\"22\"/>");
+        return new Microsoft.AspNetCore.Html.HtmlString(
+            $"<svg viewBox=\"0 0 200 110\" class=\"w-100\" style=\"max-height:120px\"><path d=\"M20 100 A80 80 0 0 1 180 100\" fill=\"none\" stroke=\"#e6e6e6\" stroke-width=\"22\"/>{arc}</svg>");
+    }
+
+    static Microsoft.AspNetCore.Html.IHtmlContent Donut(List<(string Label, int Value)> data, string[] colors, bool hole)
+    {
+        var total = data.Sum(d => d.Value);
+        var sb = new System.Text.StringBuilder("<svg viewBox=\"0 0 220 220\" class=\"w-100\" style=\"max-height:260px\">");
+        if (total == 0)
+        {
+            sb.Append(hole ? "<circle cx=\"110\" cy=\"110\" r=\"80\" fill=\"none\" stroke=\"#e6e6e6\" stroke-width=\"40\"/>" : "<circle cx=\"110\" cy=\"110\" r=\"80\" fill=\"#e6e6e6\"/>");
+        }
+        else
+        {
+            var r = hole ? 80 : 40;
+            var width = hole ? 40 : 80;  // pie = circle of radius 40 with an 80 wide stroke
+            var circ = 2 * Math.PI * r;
+            double offset = 0;
+            for (var i = 0; i < data.Count; i++)
+            {
+                var len = circ * data[i].Value / total;
+                sb.Append(System.FormattableString.Invariant(
+                    $"<circle cx=\"110\" cy=\"110\" r=\"{r}\" fill=\"none\" stroke=\"{colors[i % colors.Length]}\" stroke-width=\"{width}\" stroke-dasharray=\"{len:0.##} {circ - len:0.##}\" stroke-dashoffset=\"{-offset:0.##}\" transform=\"rotate(-90 110 110)\"><title>{data[i].Label}: {data[i].Value}</title></circle>"));
+                offset += len;
+            }
+        }
+        return new Microsoft.AspNetCore.Html.HtmlString(sb.Append("</svg>").ToString());
+    }
+}
+
+@if (User.IsInRole(RoleNames.Employee))
+{
+    <h4 class="mb-3">Welcome, @User.Identity?.Name</h4>
+    <div class="row g-3">
+        <div class="col-md-3"><a asp-controller="Attendance" asp-action="Index" class="btn btn-outline-primary w-100">My attendance</a></div>
+        <div class="col-md-3"><a asp-controller="Leaves" asp-action="Index" class="btn btn-outline-primary w-100">My leaves</a></div>
+        <div class="col-md-3"><a asp-controller="Payroll" asp-action="Index" class="btn btn-outline-primary w-100">My payslips</a></div>
+        <div class="col-md-3"><a asp-controller="Reviews" asp-action="Index" class="btn btn-outline-primary w-100">My reviews</a></div>
+        <div class="col-md-3"><a href="/Notifications" class="btn btn-outline-primary w-100">My notifications</a></div>
+    </div>
+}
+else
+{
+    <div class="dash-side no-print">
+        <a href="/Employees" title="Employees">&#128100;</a>
+        <a href="/Attendance" title="Attendance">&#128197;</a>
+        <a href="/Leaves" title="Leave">&#128188;</a>
+        <a href="/Payroll" title="Payroll">&#128176;</a>
+        <a href="/Reports" title="Reports">&#128202;</a>
+    </div>
+
+    <div class="dash-wrap">
+        <form method="get" id="dashFilter"></form>
+        <div class="row g-3">
+            <div class="col-6 col-xl-2">
+                <div class="dcard filter-card">
+                    <label class="mb-2 d-block">Date</label>
+                    <input type="date" name="date" form="dashFilter" value="@Model.Date.ToString("yyyy-MM-dd")" class="form-control" onchange="this.form.submit()" />
+                </div>
+            </div>
+            <div class="col-6 col-xl-2">
+                <div class="dcard filter-card">
+                    <label class="mb-2 d-block">Departments</label>
+                    <select name="dept" form="dashFilter" class="form-select" onchange="this.form.submit()">
+                        <option value="">All Department</option>
+                        @foreach (var o in Model.Departments.OrderBy(o => o.Value)) { <option value="@o.Key" selected="@(Model.DepartmentId == o.Key)">@o.Value</option> }
+                    </select>
+                </div>
+            </div>
+            <div class="col-6 col-xl-2"><a href="/Employees" class="dcard dnum d-block text-decoration-none text-dark"><div class="t">Total Employee</div><div class="v">@c.TotalEmployees</div></a></div>
+            <div class="col-6 col-xl-2"><a href="/Attendance" class="dcard dnum d-block text-decoration-none text-dark"><div class="t">Employee Days Present</div><div class="v">@c.DaysPresent</div></a></div>
+            <div class="col-6 col-xl-2"><a href="/Attendance" class="dcard dnum d-block text-decoration-none text-dark"><div class="t">Employee Days Absent</div><div class="v">@c.DaysAbsent</div></a></div>
+            <div class="col-6 col-xl-2"><a href="/Leaves" class="dcard dnum d-block text-decoration-none text-dark"><div class="t">Unscheduled Days Leave</div><div class="v">@c.UnscheduledLeave</div></a></div>
+
+            <div class="col-lg-6 col-xl-4"><div class="dcard"><h6>Employees by Experience</h6>@Bars(c.ExperienceBuckets, "#7e57c2")</div></div>
+            <div class="col-lg-6 col-xl-4"><div class="dcard"><h6>Absences by Month</h6>@Line(c.AbsencesByMonth)</div></div>
+            <div class="col-md-4 col-xl-4">
+                <div class="row g-3 h-100">
+                    <div class="col-12">
+                        <div class="dcard">
+                            <h6>Sick Leave vs. Casual Leave <small class="text-muted">(@c.Date.Year, days)</small></h6>
+                            <div class="d-flex justify-content-around align-items-center text-center">
+                                <div><div class="fs-1 fw-bold">@c.SickLeaveDays</div><div class="text-muted">Sick</div></div>
+                                <div style="width:1px;height:50px;background:#ddd"></div>
+                                <div><div class="fs-1 fw-bold">@c.CasualLeaveDays</div><div class="text-muted">Casual</div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6"><div class="dcard"><h6 class="text-center">Absenteeism Rate</h6>@Gauge(c.AbsenteeismRate, "#ff5a5f")<div class="gauge-v">@N(c.AbsenteeismRate)%</div></div></div>
+                    <div class="col-6"><div class="dcard"><h6 class="text-center">Presentism Rate</h6>@Gauge(c.PresentismRate, "#26a69a")<div class="gauge-v">@N(c.PresentismRate)%</div></div></div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="dcard">
+                    <h6 class="mb-0">Employee Work Location Breakdown</h6>
+                    <div class="small text-muted mb-2">Employees per workstation / branch</div>
+                    @Donut(c.WorkLocations, palette, true)
+                    <div class="legend">@for (var i = 0; i < c.WorkLocations.Count; i++) { <span><i style="background:@palette[i % palette.Length]"></i>@c.WorkLocations[i].Label (@c.WorkLocations[i].Value)</span> }</div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="dcard">
+                    <h6>Leave Type Distribution <small class="text-muted">(@c.Date.Year)</small></h6>
+                    @Donut(c.LeaveTypes, palette, false)
+                    <div class="legend">@for (var i = 0; i < c.LeaveTypes.Count; i++) { <span><i style="background:@palette[i % palette.Length]"></i>@c.LeaveTypes[i].Label (@c.LeaveTypes[i].Value d)</span> }</div>
+                    @if (!c.LeaveTypes.Any()) { <div class="text-muted small text-center">No approved leave this year.</div> }
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="dcard">
+                    <h6>Attendance by Department <small class="text-muted">(@c.Date.ToString("dd MMM yyyy"))</small></h6>
+                    @foreach (var d in c.AttendanceByDepartment)
+                    {
+                        <div class="small d-flex justify-content-between mt-2"><span>@d.Label</span><span>@N(d.Percent)%</span></div>
+                        <div class="progress" style="height:10px"><div class="progress-bar" style="width:@N(d.Percent)%;background:#42a5f5"></div></div>
+                    }
+                    @if (!c.AttendanceByDepartment.Any()) { <div class="text-muted small">No department yet.</div> }
+                </div>
+            </div>
+        </div>
+
+        <h6 class="mt-4 mb-2">Find employee</h6>
+        <form method="get" class="dcard mb-3">
+            <input type="hidden" name="apply" value="true" />
+            <div class="row g-2 align-items-end">
+                <div class="col-md-2"><label class="form-label small mb-1">Workstation</label>
+                    <select name="BranchId" class="form-select form-select-sm"><option value="">Workstation</option>
+                        @foreach (var o in Model.Branches.OrderBy(o => o.Value)) { <option value="@o.Key" selected="@(f.BranchId == o.Key)">@o.Value</option> }</select></div>
+                <div class="col-md-2"><label class="form-label small mb-1">Designation</label>
+                    <select name="DesignationId" class="form-select form-select-sm"><option value="">All Designation</option>
+                        @foreach (var o in Model.Designations.OrderBy(o => o.Value)) { <option value="@o.Key" selected="@(f.DesignationId == o.Key)">@o.Value</option> }</select></div>
+                <div class="col-md-2"><label class="form-label small mb-1">Department</label>
+                    <select name="DepartmentId" class="form-select form-select-sm"><option value="">All Department</option>
+                        @foreach (var o in Model.Departments.OrderBy(o => o.Value)) { <option value="@o.Key" selected="@(f.DepartmentId == o.Key)">@o.Value</option> }</select></div>
+                <div class="col-md-2"><label class="form-label small mb-1">Name of Employee</label><input name="Name" value="@f.Name" class="form-control form-control-sm" placeholder="Name of Employee" /></div>
+                <div class="col-md-2"><label class="form-label small mb-1">Employee Id No.</label><input name="EmployeeCode" value="@f.EmployeeCode" class="form-control form-control-sm" placeholder="Employee Id No." /></div>
+                <div class="col-md-2 d-flex gap-2"><button class="btn btn-dark btn-sm">Apply</button><a href="/Dashboard" class="btn btn-link btn-sm">Reset</a></div>
+            </div>
+        </form>
+
+        @if (Model.Searched)
+        {
+            <div class="dcard mb-3">
+                <h6>Employees found: @Model.Results.Count</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead><tr><th>Id No.</th><th>Name</th><th>Department</th><th>Designation</th><th>Workstation</th><th>Joined</th><th>Status</th></tr></thead>
+                        <tbody>
+                            @foreach (var e in Model.Results)
+                            {
+                                <tr class="clickable" onclick="location.href='/records/Employee/@e.EmployeeId'">
+                                    <td><a href="/records/Employee/@e.EmployeeId">@e.Code</a></td><td>@e.Name</td><td>@e.Department</td><td>@e.Designation</td><td>@e.Branch</td>
+                                    <td>@e.JoinDate.ToString("dd MMM yyyy")</td><td><span class="badge status-@e.Status.ToLower()">@e.Status</span></td>
+                                </tr>
+                            }
+                            @if (!Model.Results.Any()) { <tr><td colspan="7" class="text-center text-muted">No employee matches the filter.</td></tr> }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        <div class="row g-3 mb-3">
+            @{
+                var cards = new List<(string Label, int Value, string Link)>
+                {
+                    ("Pending leaves", s.PendingLeaves, "/Leaves"), ("Pending requests", s.PendingRequests, "/WorkFromHomeRequests"),
+                    ("Open jobs", s.OpenJobs, "/Jobs"), ("Applications", s.Applications, "/Applications"),
+                    ("Open requisitions", s.OpenRequisitions, "/ManpowerRequisitions"), ("Trainings", s.RunningTrainings, "/TrainingPrograms"),
+                    ("Contracts expiring (30 d)", s.ContractsExpiring, "/Reports/Show/expiry"), ("Running loans", s.RunningLoans, "/LoanAdvances")
+                };
+            }
+            @foreach (var card in cards)
+            {
+                <div class="col-6 col-md-3"><a href="@card.Link" class="dcard dnum d-block text-decoration-none text-dark"><div class="t small">@card.Label</div><div class="v">@card.Value</div></a></div>
+            }
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-5">
+                <div class="dcard">
+                    <h6>Hiring pipeline</h6>
+                    <ul class="list-group list-group-flush">
+                        @foreach (var p in Model.ApplicationsByStatus) { <li class="list-group-item d-flex justify-content-between px-0">@p.Key <span class="badge bg-secondary">@p.Value</span></li> }
+                    </ul>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="dcard">
+                    <h6>Upcoming holidays</h6>
+                    <ul class="list-group list-group-flush">
+                        @foreach (var h in s.UpcomingHolidays) { <li class="list-group-item d-flex justify-content-between px-0"><span>@h.Name</span><small class="text-muted">@h.Date.ToString("dd MMM yyyy")</small></li> }
+                        @if (!s.UpcomingHolidays.Any()) { <li class="list-group-item px-0 text-muted small">No upcoming holiday.</li> }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+}

@@ -1,0 +1,38 @@
+@using HR.DataAccess.Reporting
+@using HR.Web.UI.Helpers
+@model List<TableSummary>
+@{
+    ViewData["Title"] = "Database overview";
+    var relations = Model.Sum(t => t.References.Count);
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-0">Database overview</h4>
+        <div class="text-muted small">@Model.Count tables, @relations foreign key relations, @Model.Count(t => t.SoftDelete) tables with soft delete</div>
+    </div>
+    <button type="button" onclick="window.print()" class="btn btn-sm btn-outline-secondary no-print">Print</button>
+</div>
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr><th>SL</th><th>Table</th><th>Rows</th><th>Columns</th><th>Soft delete</th><th>Refers to (parent tables)</th><th>Used by (child tables)</th></tr></thead>
+            <tbody>
+                @{ var sl = 0; }
+                @foreach (var t in Model)
+                {
+                    var m = ModuleRegistry.ForEntity(t.EntityName);
+                    sl++;
+                    <tr>
+                        <td>@sl</td>
+                        <td>@if (m != null && ModuleRegistry.IsAllowed(User, m.Roles)) { <a href="/@m.Controller">@t.TableName</a> } else { @t.TableName }</td>
+                        <td>@t.Rows</td>
+                        <td>@t.Columns</td>
+                        <td>@(t.SoftDelete ? "Yes" : "No")</td>
+                        <td class="small">@string.Join(", ", t.References)</td>
+                        <td class="small">@string.Join(", ", t.ReferencedBy)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

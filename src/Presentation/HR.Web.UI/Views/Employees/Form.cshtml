@@ -1,0 +1,42 @@
+@using HR.Entities
+@model Employee
+@{
+    var isNew = Model.EmployeeId == 0;
+    ViewData["Title"] = (isNew ? "Add " : "Edit ") + "employee";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="mb-3">@ViewData["Title"]</h4>
+                <form asp-action="@(isNew ? "Create" : "Edit")" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                    @if (!isNew)
+                    {
+                        <input type="hidden" asp-for="EmployeeId" />
+                    }
+                    <div class="row g-3">
+            <div class="col-md-6"><label asp-for="UserId" class="form-label">User account</label><select asp-for="UserId" class="form-select" asp-items="@((IEnumerable<SelectListItem>)ViewBag.Users)"><option value="">-- Select --</option></select><span asp-validation-for="UserId" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="DepartmentId" class="form-label">Department</label><select asp-for="DepartmentId" class="form-select" asp-items="@((IEnumerable<SelectListItem>)ViewBag.Departments)"><option value="">-- Select --</option></select><span asp-validation-for="DepartmentId" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="DesignationId" class="form-label">Designation</label><select asp-for="DesignationId" class="form-select" asp-items="@((IEnumerable<SelectListItem>)ViewBag.Designations)"><option value="">-- Select --</option></select><span asp-validation-for="DesignationId" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="ManagerId" class="form-label">Manager</label><select asp-for="ManagerId" class="form-select" asp-items="@((IEnumerable<SelectListItem>)ViewBag.Managers)"><option value="">-- Select --</option></select><span asp-validation-for="ManagerId" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="BranchId" class="form-label">Workstation / Branch</label><select asp-for="BranchId" class="form-select" asp-items="@((IEnumerable<SelectListItem>)ViewBag.Branches)"><option value="">-- None --</option></select></div>
+            <div class="col-md-6"><label asp-for="JoinDate" class="form-label">Join date</label><input asp-for="JoinDate" type="date" class="form-control" /><span asp-validation-for="JoinDate" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="Salary" class="form-label">Salary</label><input asp-for="Salary" class="form-control" step="0.01" /><span asp-validation-for="Salary" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="Status" class="form-label">Status</label><select asp-for="Status" class="form-select" asp-items="@(new SelectList(EmployeeStatus.All))"></select><span asp-validation-for="Status" class="text-danger"></span></div>
+            <div class="col-12"><label asp-for="Address" class="form-label">Address</label><textarea asp-for="Address" class="form-control" rows="3"></textarea><span asp-validation-for="Address" class="text-danger"></span></div>
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

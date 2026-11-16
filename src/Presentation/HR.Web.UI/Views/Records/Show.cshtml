@@ -1,0 +1,107 @@
+@using HR.DataAccess.Reporting
+@using HR.Web.UI.Helpers
+@model RecordDetails
+@{
+    var module = ModuleRegistry.ForEntity(Model.EntityName);
+    ViewData["Title"] = Model.Title;
+    var here = $"/records/{Model.EntityName}/{Model.Id}";
+    var canEdit = module != null && ModuleRegistry.IsAllowed(User, module.Roles);
+    var withRows = Model.Children.Where(c => c.Total > 0).ToList();
+    var empty = Model.Children.Where(c => c.Total == 0).ToList();
+}
+
+<nav class="small mb-2 no-print">
+    <a href="/Dashboard">Home</a> /
+    @if (module != null) { <a href="/@module.Controller">@module.Title</a> } else { <span>@EntityMeta.Words(Model.EntityName)</span> } /
+    <span class="text-muted">@Model.Title</span>
+</nav>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <div class="text-uppercase small text-muted">@EntityMeta.Words(Model.EntityName) #@Model.Id</div>
+        <h4 class="mb-0">@Model.Title</h4>
+    </div>
+    <div class="d-flex gap-2 no-print">
+        @if (canEdit) { <a href="/@module!.Controller/Edit/@Model.Id" class="btn btn-sm btn-outline-secondary">Edit</a> }
+        <button type="button" onclick="window.print()" class="btn btn-sm btn-outline-secondary">Print</button>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="mb-3">Details</h6>
+                <table class="table table-sm mb-0 detail-table">
+                    @foreach (var f in Model.Fields)
+                    {
+                        <tr>
+                            <th>@f.Label</th>
+                            <td>
+                                @if (f.LinkEntity != null) { <a href="/records/@f.LinkEntity/@f.LinkId">@f.Value</a> }
+                                else { @f.Value }
+                            </td>
+                        </tr>
+                    }
+                </table>
+            </div>
+        </div>
+        @if (empty.Any())
+        {
+            <div class="card mt-3 no-print">
+                <div class="card-body">
+                    <h6 class="mb-2">Add connected record</h6>
+                    <div class="d-flex flex-wrap gap-1">
+                        @foreach (var c in empty)
+                        {
+                            var m = ModuleRegistry.ForEntity(c.EntityName);
+                            if (m != null && ModuleRegistry.IsAllowed(User, m.Roles))
+                            {
+                                <a class="btn btn-sm btn-light border" href="/@m.Controller/Create?@c.ForeignKey=@Model.Id&returnUrl=@Uri.EscapeDataString(here)">+ @c.Title</a>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="col-lg-8">
+        @if (!withRows.Any())
+        {
+            <div class="alert alert-light border">No connected records yet. Use "Add connected record" to link data to this record.</div>
+        }
+        @foreach (var c in withRows)
+        {
+            var m = ModuleRegistry.ForEntity(c.EntityName);
+            var allowed = m != null && ModuleRegistry.IsAllowed(User, m.Roles);
+            <div class="card mb-3">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold">@c.Title <span class="badge bg-secondary ms-1">@c.Total</span></span>
+                    @if (allowed)
+                    {
+                        <span class="no-print">
+                            <a class="btn btn-sm btn-link" href="/@m!.Controller?@c.ForeignKey=@Model.Id">View all</a>
+                            <a class="btn btn-sm btn-outline-primary" href="/@m!.Controller/Create?@c.ForeignKey=@Model.Id&returnUrl=@Uri.EscapeDataString(here)">+ Add</a>
+                        </span>
+                    }
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead><tr><th>#</th>@foreach (var col in c.Columns) { <th>@col</th> }</tr></thead>
+                        <tbody>
+                            @foreach (var r in c.Rows)
+                            {
+                                <tr class="clickable" onclick="location.href='/records/@c.EntityName/@r.Id'">
+                                    <td><a href="/records/@c.EntityName/@r.Id">@r.Id</a></td>
+                                    @foreach (var cell in r.Cells) { <td>@cell</td> }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                @if (c.Total > c.Rows.Count) { <div class="card-footer small text-muted">Showing latest @c.Rows.Count of @c.Total.</div> }
+            </div>
+        }
+    </div>
+</div>

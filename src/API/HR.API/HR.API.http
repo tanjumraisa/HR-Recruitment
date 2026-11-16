@@ -1,0 +1,29 @@
+@host = https://localhost:7181
+@key = hr-dev-key-change-me
+
+### List of all endpoints
+GET {{host}}/api
+X-Api-Key: {{key}}
+
+### Dashboard numbers
+GET {{host}}/api/dashboard
+X-Api-Key: {{key}}
+
+### All branches
+GET {{host}}/api/branches
+X-Api-Key: {{key}}
+
+### Add a branch
+POST {{host}}/api/branches
+X-Api-Key: {{key}}
+Content-Type: application/json
+
+{ "name": "Sylhet Branch", "code": "SYL", "address": "Sylhet" }
+
+### Employee with all connected records
+GET {{host}}/api/records/Employee/1
+X-Api-Key: {{key}}
+
+### Salary sheet report
+GET {{host}}/api/reports/salary-sheet?month=11&year=2026
+X-Api-Key: {{key}}

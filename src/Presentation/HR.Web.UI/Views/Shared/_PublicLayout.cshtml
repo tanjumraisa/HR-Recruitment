@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] | HR &amp; Recruitment</title>
+    <link href="~/lib/bootstrap/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand navbar-dark topbar">
+        <div class="container">
+            <a class="navbar-brand" asp-controller="Careers" asp-action="Index">HR &amp; Recruitment</a>
+            <ul class="navbar-nav ms-auto align-items-center">
+                <li class="nav-item"><a class="nav-link" asp-controller="Careers" asp-action="Index">Careers</a></li>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    @if (User.IsInRole(RoleNames.Candidate))
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-controller="Careers" asp-action="MyApplications">My applications</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Profile" asp-action="Index">My profile / CV</a></li>
+                    }
+                    else
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-controller="Dashboard" asp-action="Index">Dashboard</a></li>
+                    }
+                    <li class="nav-item">
+                        <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                            <button class="btn btn-sm btn-outline-light ms-2">Logout (@User.Identity.Name)</button>
+                        </form>
+                    </li>
+                }
+                else
+                {
+                    <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
+                    <li class="nav-item"><a class="btn btn-sm btn-light ms-2" href="/register">Register</a></li>
+                }
+            </ul>
+        </div>
+    </nav>
+    <div class="container py-4">
+        <partial name="_Alerts" />
+        @RenderBody()
+    </div>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

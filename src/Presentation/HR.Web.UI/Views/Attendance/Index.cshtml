@@ -1,0 +1,52 @@
+@using HR.Entities
+@model List<Attendance>
+@{
+    ViewData["Title"] = "Attendance";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Attendance</h4>
+    @if (User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.HRManager))
+    {
+        <a asp-action="Create" class="btn btn-primary">+ Add</a>
+    }
+</div>
+
+    @if (User.IsInRole(RoleNames.Employee))
+    {
+        <div class="mb-3">
+            <form asp-action="CheckIn" method="post" class="d-inline"><button class="btn btn-success">Check in</button></form>
+            <form asp-action="CheckOut" method="post" class="d-inline"><button class="btn btn-outline-secondary">Check out</button></form>
+        </div>
+    }
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead><tr><th>Employee</th><th>Date</th><th>Check in</th><th>Check out</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var x in Model)
+                {
+                    <tr>
+                        <td>@x.Employee.User.FullName</td><td>@x.Date.ToString("yyyy-MM-dd")</td><td>@(x.CheckIn?.ToString(@"hh\:mm") ?? "-")</td><td>@(x.CheckOut?.ToString(@"hh\:mm") ?? "-")</td><td><span class="badge bg-secondary">@x.Status</span></td>
+                        <td class="text-end text-nowrap">
+                            @if (!User.IsInRole(RoleNames.Employee)) { <a href="/records/Attendance/@x.AttendanceId" class="btn btn-sm btn-outline-primary" title="Open with all connected records">View</a> }
+                        
+                            @if (User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.HRManager))
+                            {
+                                <a asp-action="Edit" asp-route-id="@x.AttendanceId" class="btn btn-sm btn-outline-secondary">Edit</a>
+                            }
+                            @if (User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.HRManager))
+                            {
+                                <a asp-action="Delete" asp-route-id="@x.AttendanceId" class="btn btn-sm btn-outline-danger">Delete</a>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="6" class="text-center text-muted py-4">No records found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

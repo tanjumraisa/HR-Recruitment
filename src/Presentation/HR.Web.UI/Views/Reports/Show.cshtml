@@ -1,0 +1,74 @@
+@model ReportViewModel
+@inject Microsoft.Extensions.Configuration.IConfiguration Config
+@{
+    ViewData["Title"] = Model.Result.Title;
+    var f = Model.Filter;
+    var query = Context.Request.QueryString.Value ?? "";
+    var csv = string.IsNullOrEmpty(query) ? "?export=csv" : query + "&export=csv";
+}
+<div class="d-flex justify-content-between align-items-center mb-3 no-print">
+    <div><a href="/Reports" class="small">&laquo; All reports</a><h4 class="mb-0">@Model.Info.Title</h4></div>
+    <div class="d-flex gap-2">
+        <a href="@csv" class="btn btn-sm btn-outline-secondary">Export CSV</a>
+        <button type="button" onclick="window.print()" class="btn btn-sm btn-dark">Print</button>
+    </div>
+</div>
+
+@if (Model.Info.NeedsMonth || Model.Info.NeedsYear || Model.Info.NeedsFilters)
+{
+    <form method="get" class="card card-body mb-3 no-print filter-bar">
+        <div class="row g-2 align-items-end">
+            @if (Model.Info.NeedsMonth)
+            {
+                <div class="col-md-2"><label class="form-label small mb-1">Month</label>
+                    <select name="Month" class="form-select form-select-sm">
+                        @for (var m = 1; m <= 12; m++) { <option value="@m" selected="@(f.Month == m)">@System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName(m)</option> }
+                    </select></div>
+            }
+            @if (Model.Info.NeedsYear)
+            {
+                <div class="col-md-2"><label class="form-label small mb-1">Year</label><input name="Year" type="number" value="@f.Year" class="form-control form-control-sm" /></div>
+            }
+            @if (Model.Info.NeedsFilters)
+            {
+                <div class="col-md-2"><label class="form-label small mb-1">Branch</label>
+                    <select name="BranchId" class="form-select form-select-sm"><option value="">All</option>
+                        @foreach (var o in Model.Branches.OrderBy(o => o.Value)) { <option value="@o.Key" selected="@(f.BranchId == o.Key)">@o.Value</option> }</select></div>
+                <div class="col-md-2"><label class="form-label small mb-1">Department</label>
+                    <select name="DepartmentId" class="form-select form-select-sm"><option value="">All</option>
+                        @foreach (var o in Model.Departments.OrderBy(o => o.Value)) { <option value="@o.Key" selected="@(f.DepartmentId == o.Key)">@o.Value</option> }</select></div>
+                <div class="col-md-2"><label class="form-label small mb-1">Designation</label>
+                    <select name="DesignationId" class="form-select form-select-sm"><option value="">All</option>
+                        @foreach (var o in Model.Designations.OrderBy(o => o.Value)) { <option value="@o.Key" selected="@(f.DesignationId == o.Key)">@o.Value</option> }</select></div>
+                <div class="col-md-2"><label class="form-label small mb-1">Status</label>
+                    <select name="Status" class="form-select form-select-sm"><option value="">All</option>
+                        @foreach (var s in HR.Framework.EmployeeStatus.All) { <option selected="@(f.Status == s)">@s</option> }</select></div>
+            }
+            <div class="col-md-2"><button class="btn btn-sm btn-dark">Apply</button></div>
+        </div>
+    </form>
+}
+
+<div class="register-sheet">
+    <div class="text-center">
+        <h4 class="mb-0">@(Config["Company:Name"] ?? "Company Name")</h4>
+        <div class="text-muted">@(Config["Company:Address"] ?? "Company address")</div>
+    </div>
+    <h5 class="text-center mt-2 mb-0 text-decoration-underline">@Model.Result.Title</h5>
+    @if (Model.Result.Subtitle != null) { <div class="text-center small mb-2">@Model.Result.Subtitle</div> }
+    <table class="table table-sm mt-2">
+        <thead><tr>@foreach (var c in Model.Result.Columns) { <th>@c</th> }</tr></thead>
+        <tbody>
+            @foreach (var r in Model.Result.Rows)
+            {
+                <tr>@foreach (var cell in r) { <td>@cell</td> }</tr>
+            }
+            @if (!Model.Result.Rows.Any()) { <tr><td colspan="@Model.Result.Columns.Count" class="text-center text-muted">No data for this selection.</td></tr> }
+        </tbody>
+        @if (Model.Result.Footer != null && Model.Result.Rows.Any())
+        {
+            <tfoot><tr class="fw-bold">@foreach (var c in Model.Result.Footer) { <td>@c</td> }</tr></tfoot>
+        }
+    </table>
+    <div class="small text-muted">Printed on @DateTime.Now.ToString("dd MMM yyyy HH:mm") by @User.Identity?.Name</div>
+</div>

@@ -1,0 +1,109 @@
+@using HR.Web.UI.Helpers
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var isStaff = User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.HRManager) || User.IsInRole(RoleNames.Recruiter);
+    var isHr = User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.HRManager);
+    var role = User.IsInRole(RoleNames.Admin) ? "Administrator" : User.IsInRole(RoleNames.HRManager) ? "HR Manager"
+             : User.IsInRole(RoleNames.Recruiter) ? "Recruiter" : User.IsInRole(RoleNames.Employee) ? "Employee" : "User";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] | HR &amp; Recruitment</title>
+    <link href="~/lib/bootstrap/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="topbar-main no-print">
+        <div class="d-flex align-items-stretch justify-content-between top-white">
+            <a href="/Dashboard" class="brand-logo"><span class="b1">HR</span><span class="b2">MS</span><small>HR &amp; Recruitment</small></a>
+            <div class="d-flex align-items-stretch top-icons">
+                <div class="top-cell">@await Component.InvokeAsync("NotificationBell")</div>
+                <a class="top-cell" href="/Notifications" title="Messages">
+                    <svg width="26" height="22" viewBox="0 0 24 20" fill="#1d1d1d"><path d="M2 2h20a2 2 0 0 1 2 2v.5L12 11 0 4.5V4a2 2 0 0 1 2-2zm-2 5 12 6.5L24 7v9a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2z"/></svg>
+                </a>
+                <div class="dd top-cell user-cell">
+                    <a href="#" onclick="return false;" class="user-box">
+                        <span class="avatar">@(string.IsNullOrEmpty(User.Identity?.Name) ? "U" : User.Identity!.Name![..1].ToUpper())</span>
+                        <span class="d-none d-md-inline"><strong>@User.Identity?.Name</strong><br /><small>@role</small></span>
+                        <span class="ms-1">&#9662;</span>
+                    </a>
+                    <div class="dd-menu dd-right">
+                        <a href="/Notifications">My notifications</a>
+                        @if (User.IsInRole(RoleNames.Admin)) { <a href="/AuditLogs">Audit log</a> }
+                        <form asp-controller="Account" asp-action="Logout" method="post" class="m-0"><button class="dd-btn">Logout</button></form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <nav class="mainmenu px-2">
+            <a class="mm-link @(controller == "Dashboard" ? "active" : "")" href="/Dashboard">&#8962; Home</a>
+            @foreach (var g in ModuleRegistry.Groups)
+            {
+                var items = ModuleRegistry.InGroup(g.Key, User).ToList();
+                if (!items.Any()) { continue; }
+                var active = items.Any(i => i.Controller == controller);
+                <div class="dd">
+                    <a href="#" onclick="return false;" class="mm-link @(active ? "active" : "")">@g.Title &#9662;</a>
+                    <div class="dd-menu @(items.Count > 10 ? "cols-2" : "")">
+                        @foreach (var i in items)
+                        {
+                            <a href="/@i.Controller" class="@(i.Controller == controller ? "current" : "")">@i.Title</a>
+                        }
+                        @if (g.Key == "Settings" && isStaff) { <a href="/records">Database overview</a> }
+                    </div>
+                </div>
+            }
+            @if (isStaff)
+            {
+                <div class="dd">
+                    <a href="#" onclick="return false;" class="mm-link @(controller == "Reports" ? "active" : "")">All Reports &#9662;</a>
+                    <div class="dd-menu cols-2">
+                        <a href="/Reports">All reports</a>
+                        <a href="/Reports/Show/employees">Employee list</a>
+                        <a href="/Reports/Show/headcount">Headcount</a>
+                        <a href="/Reports/Show/attendance-summary">Monthly attendance</a>
+                        <a href="/Reports/Show/leave-summary">Leave summary</a>
+                        <a href="/Reports/Show/salary-sheet">Salary sheet</a>
+                        <a href="/Reports/Show/overtime">Overtime register</a>
+                        <a href="/Reports/Show/recruitment-funnel">Recruitment funnel</a>
+                        <a href="/Reports/Show/training">Training report</a>
+                        <a href="/Reports/Show/loans">Loans outstanding</a>
+                        <a href="/Reports/Show/expiry">Contract / document expiry</a>
+                        <a href="/Reports/Show/new-joiners">Employee new join list</a>
+                        <a href="/Reports/Show/increment">Increment report</a>
+                        <a href="/Reports/Show/punch-missing">In / out punch missing</a>
+                        <a href="/Reports/Show/fund-balance">Fund balance</a>
+                        <a href="/Reports/Show/outsourced-salary">Outsourced salary sheet</a>
+                        <a href="/Reports/Show/travel-expense">TA/DA expense</a>
+                    </div>
+                </div>
+            }
+            @if (isHr)
+            {
+                <div class="dd">
+                    <a href="#" onclick="return false;" class="mm-link @(controller == "Registers" ? "active" : "")">All Registers &#9662;</a>
+                    <div class="dd-menu">
+                        <a asp-controller="Registers" asp-action="Index">All registers and forms</a>
+                        <div class="dd-title">Registers</div>
+                        <a asp-controller="Registers" asp-action="EmployeeRegister">Employee Register</a>
+                        <a asp-controller="Registers" asp-action="LeaveRegister">Leave Register</a>
+                        <a asp-controller="Registers" asp-action="AttendanceRegister">Daily Attendance Register</a>
+                        <a asp-controller="Registers" asp-action="WagesRegister">Wages and Payslip Register</a>
+                        <div class="dd-title">Letters</div>
+                        <a asp-controller="Registers" asp-action="AppointmentLetter">Appointment Letter</a>
+                    </div>
+                </div>
+            }
+        </nav>
+    </header>
+    <main class="p-3 p-lg-4">
+        <partial name="_Alerts" />
+        @RenderBody()
+    </main>
+    <script src="~/lib/bootstrap/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

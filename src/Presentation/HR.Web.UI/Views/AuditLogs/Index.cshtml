@@ -1,0 +1,38 @@
+@model List<HR.Entities.AuditLog>
+@{
+    ViewData["Title"] = "Audit log";
+    int pageNo = ViewBag.Page, pages = ViewBag.TotalPages;
+    string? q = ViewBag.Q;
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div><h4 class="mb-0">Audit log</h4><div class="small text-muted">Every insert, update and delete is recorded automatically (@ViewBag.Total entries).</div></div>
+    <form method="get" class="d-flex gap-2"><input name="q" value="@q" class="form-control form-control-sm" placeholder="Table, action, user or record id" /><button class="btn btn-sm btn-dark">Search</button></form>
+</div>
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Table</th><th>Record</th><th>Changes</th></tr></thead>
+            <tbody>
+                @foreach (var a in Model)
+                {
+                    <tr>
+                        <td class="text-nowrap">@a.CreatedAt.ToString("dd MMM yyyy HH:mm:ss")</td>
+                        <td>@a.UserName</td>
+                        <td><span class="badge status-@a.Action.ToLower()">@a.Action</span></td>
+                        <td>@a.EntityName</td>
+                        <td>@if (int.TryParse(a.RecordId, out var rid) && a.Action != "Deleted") { <a href="/records/@a.EntityName/@rid">@rid</a> } else { @a.RecordId }</td>
+                        <td class="small text-break">@a.Changes</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+@if (pages > 1)
+{
+    <div class="mt-2 d-flex gap-2 align-items-center">
+        @if (pageNo > 1) { <a class="btn btn-sm btn-outline-secondary" href="?q=@q&page=@(pageNo - 1)">&laquo; Newer</a> }
+        <span class="small">Page @pageNo of @pages</span>
+        @if (pageNo < pages) { <a class="btn btn-sm btn-outline-secondary" href="?q=@q&page=@(pageNo + 1)">Older &raquo;</a> }
+    </div>
+}

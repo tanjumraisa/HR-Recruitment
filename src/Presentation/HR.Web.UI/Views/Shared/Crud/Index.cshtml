@@ -1,0 +1,116 @@
+@using HR.Web.UI.Helpers
+@model CrudIndexViewModel
+@{
+    var title = Model.Module?.Title ?? Model.Meta.Title;
+    ViewData["Title"] = title;
+    var entity = Model.Meta.Type.Name;
+    var columns = Model.Meta.Fields.Where(f => f.ShowInList).ToList();
+    string PageUrl(int p)
+    {
+        var q = Context.Request.Query.Where(kv => kv.Key != "page").ToDictionary(kv => kv.Key, kv => kv.Value.ToString());
+        q["page"] = p.ToString();
+        return "?" + string.Join("&", q.Select(kv => kv.Key + "=" + Uri.EscapeDataString(kv.Value)));
+    }
+    var exportQuery = string.Join("&", Context.Request.Query.Where(kv => kv.Key != "page" && kv.Key != "export").Select(kv => kv.Key + "=" + Uri.EscapeDataString(kv.Value.ToString())));
+}
+
+<div class="page-head d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <h4 class="mb-0">@title</h4>
+        @if (Model.Module != null) { <div class="text-muted small">@Model.Module.Description</div> }
+    </div>
+    <div class="d-flex gap-2 no-print">
+        <a href="?@exportQuery&export=csv" class="btn btn-outline-secondary btn-sm">Export CSV</a>
+        <button type="button" onclick="window.print()" class="btn btn-outline-secondary btn-sm">Print</button>
+        <a asp-action="Create" asp-all-route-data="@Model.Filters.ToDictionary(k => k.Key, k => k.Value.ToString())" class="btn btn-primary btn-sm">+ Add new</a>
+    </div>
+</div>
+
+<form method="get" class="card card-body mb-3 no-print filter-bar">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label small mb-1">Search</label>
+            <input name="q" value="@Model.Q" class="form-control form-control-sm" placeholder="Type any text..." />
+        </div>
+        @foreach (var f in Model.Meta.Fields.Where(f => f.Kind == FieldKind.ForeignKey).Take(3))
+        {
+            <div class="col-md-2">
+                <label class="form-label small mb-1">@f.Label</label>
+                <select name="@f.Name" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    @foreach (var o in Model.Lookups[f.Name].OrderBy(o => o.Value))
+                    {
+                        <option value="@o.Key" selected="@(Model.Filters.TryGetValue(f.Name, out var sel) && sel == o.Key)">@o.Value</option>
+                    }
+                </select>
+            </div>
+        }
+        <div class="col-md-2 d-flex gap-2">
+            <button class="btn btn-dark btn-sm">Apply</button>
+            <a asp-action="Index" class="btn btn-link btn-sm">Reset</a>
+        </div>
+    </div>
+</form>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    @foreach (var c in columns) { <th>@c.Label</th> }
+                    <th class="no-print"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var x in Model.Items)
+                {
+                    var id = Model.Meta.KeyOf(x);
+                    <tr>
+                        <td class="text-muted">@id</td>
+                        @foreach (var c in columns)
+                        {
+                            var text = EntityMeta.Show(c, x, Model.Lookups);
+                            if (c.Kind == FieldKind.ForeignKey && c.Prop.GetValue(x) is int pid && pid > 0)
+                            {
+                                <td><a href="/records/@c.Target!.Name/@pid">@text</a></td>
+                            }
+                            else if (c.Name == "Status")
+                            {
+                                <td><span class="badge status-@text.ToLower()">@text</span></td>
+                            }
+                            else
+                            {
+                                <td>@text</td>
+                            }
+                        }
+                        <td class="text-end text-nowrap no-print">
+                            <a href="/records/@entity/@id" class="btn btn-sm btn-outline-primary">View</a>
+                            <a asp-action="Edit" asp-route-id="@id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                            <a asp-action="Delete" asp-route-id="@id" class="btn btn-sm btn-outline-danger">Delete</a>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Items.Any())
+                {
+                    <tr><td colspan="@(columns.Count + 2)" class="text-center text-muted py-4">No records found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mt-2 no-print">
+    <div class="small text-muted">@Model.Total record(s)</div>
+    @if (Model.TotalPages > 1)
+    {
+        <ul class="pagination pagination-sm mb-0">
+            <li class="page-item @(Model.Page == 1 ? "disabled" : "")"><a class="page-link" href="@PageUrl(Model.Page - 1)">&laquo;</a></li>
+            @for (var p = 1; p <= Model.TotalPages; p++)
+            {
+                <li class="page-item @(p == Model.Page ? "active" : "")"><a class="page-link" href="@PageUrl(p)">@p</a></li>
+            }
+            <li class="page-item @(Model.Page == Model.TotalPages ? "disabled" : "")"><a class="page-link" href="@PageUrl(Model.Page + 1)">&raquo;</a></li>
+        </ul>
+    }
+</div>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HR and Recruitment API</title>
+<style>
+  body { font-family: "Segoe UI", Arial, sans-serif; margin: 0; background: #f4f6fb; color: #1d2b4a; }
+  header { background: #1d2b4a; color: #fff; padding: 12px 20px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  header h1 { font-size: 18px; margin: 0; flex: 1; }
+  header input { padding: 6px 8px; border-radius: 6px; border: 0; width: 220px; }
+  main { display: grid; grid-template-columns: 340px 1fr; height: calc(100vh - 56px); }
+  #list { overflow-y: auto; border-right: 1px solid #dde1ee; background: #fff; }
+  #filter { width: 100%; box-sizing: border-box; padding: 8px; border: 0; border-bottom: 1px solid #dde1ee; }
+  .tag { font-size: 11px; text-transform: uppercase; color: #8a93a8; padding: 10px 12px 4px; }
+  .ep { padding: 6px 12px; cursor: pointer; font-size: 13px; display: flex; gap: 8px; align-items: center; }
+  .ep:hover, .ep.on { background: #eef1fb; }
+  .m { font-weight: 700; font-size: 11px; width: 66px; text-align: center; border-radius: 4px; padding: 2px 0; color: #fff; }
+  .GET { background: #198754; } .POST { background: #0d6efd; } .PUT { background: #d39e00; } .DELETE { background: #dc3545; }
+  #panel { padding: 20px; overflow-y: auto; }
+  label { display: block; font-size: 13px; margin: 10px 0 4px; color: #667085; }
+  input.p, textarea { width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #ccd2e3; border-radius: 6px; font-family: Consolas, monospace; }
+  textarea { height: 160px; }
+  button { background: #1d2b4a; color: #fff; border: 0; padding: 8px 18px; border-radius: 6px; margin-top: 12px; cursor: pointer; }
+  pre { background: #0f172a; color: #e2e8f0; padding: 14px; border-radius: 8px; overflow: auto; max-height: 55vh; font-size: 12px; }
+  .status { font-weight: 700; margin-top: 14px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>HR and Recruitment API</h1>
+  <span>X-Api-Key</span><input id="key" value="hr-dev-key-change-me" />
+</header>
+<main>
+  <div id="list"><input id="filter" placeholder="Search endpoint, e.g. branches" /></div>
+  <div id="panel"><p>Choose an endpoint on the left, fill the values and press <b>Send</b>.</p></div>
+</main>
+<script>
+let endpoints = [];
+let schemas = {};
+const list = document.getElementById('list');
+const panel = document.getElementById('panel');
+
+fetch('/openapi/v1.json').then(r => r.json()).then(doc => {
+  schemas = (doc.components || {}).schemas || {};
+  for (const [path, ops] of Object.entries(doc.paths))
+    for (const [method, op] of Object.entries(ops))
+      endpoints.push({ path, method: method.toUpperCase(), tag: (op.tags || ['Other'])[0], body: ((((op.requestBody || {}).content || {})['application/json'] || {}).schema) });
+  endpoints.sort((a, b) => a.tag.localeCompare(b.tag) || a.path.localeCompare(b.path));
+  draw('');
+}).catch(() => panel.innerHTML = '<p>Could not load /openapi/v1.json. Run the API in Development mode.</p>');
+
+document.getElementById('filter').oninput = e => draw(e.target.value.toLowerCase());
+
+function action(ep) {
+  const one = /\{id/.test(ep.path);
+  if (ep.method === 'GET') return one ? 'View one' : (ep.path.includes('{') || ep.path.split('/').length > 3 ? 'View' : 'View all');
+  return { POST: 'Add new', PUT: 'Edit', DELETE: 'Delete' }[ep.method] || ep.method;
+}
+function title(ep) {
+  const name = ep.tag === 'Queries' ? ep.path.replace('/api/', '').replace(/\{.*?\}/g, '').replace(/\/$/, '') : ep.tag.replace(/([a-z])([A-Z])/g, '$1 $2');
+  return name;
+}
+
+function draw(q) {
+  list.querySelectorAll('.tag,.ep').forEach(x => x.remove());
+  let last = '';
+  for (const ep of endpoints.filter(e => (e.path + e.tag + action(e)).toLowerCase().includes(q))) {
+    if (ep.tag !== last) { last = ep.tag; const t = document.createElement('div'); t.className = 'tag'; t.textContent = ep.tag; list.appendChild(t); }
+    const d = document.createElement('div');
+    d.className = 'ep';
+    d.innerHTML = `<span class="m ${ep.method}">${action(ep)}</span><span>${title(ep)}</span>`;
+    d.onclick = () => { list.querySelectorAll('.ep').forEach(x => x.classList.remove('on')); d.classList.add('on'); open(ep); };
+    list.appendChild(d);
+  }
+}
+
+function example(schema, depth) {
+  if (!schema || depth > 1) return null;
+  if (schema.$ref) return example(schemas[schema.$ref.split('/').pop()], depth);
+  const t = Array.isArray(schema.type) ? schema.type.find(x => x !== 'null') : schema.type;
+  if (schema.properties) {
+    const o = {};
+    for (const [k, v] of Object.entries(schema.properties)) {
+      if (k === 'isDeleted' || k === 'deletedAt') continue;
+      const val = example(v, depth + 1);
+      if (val !== null && typeof val !== 'object') o[k] = val;
+    }
+    return o;
+  }
+  if (schema.format === 'date-time') return new Date().toISOString().slice(0, 10);
+  if (t === 'integer') return k_is_id(schema) ? 1 : 0;
+  if (t === 'number' || (t === 'string' && /^-?\d/.test(schema.pattern || ''))) return 0;
+  if (t === 'boolean') return false;
+  if (t === 'string') return (schema.pattern || '').includes(':') ? '09:00:00' : '';
+  return null;
+}
+function k_is_id() { return false; }
+function sample(ep, params) {
+  const o = example(ep.body, 0) || {};
+  const keyName = Object.keys(o).find(k => /Id$/.test(k) && ep.path.includes(k.replace(/Id$/, '').toLowerCase()));
+  for (const k of Object.keys(o)) if (/Id$/.test(k) && k !== keyName) o[k] = 1;
+  if (keyName) o[keyName] = ep.method === 'PUT' ? 1 : 0;
+  return JSON.stringify(o, null, 2);
+}
+
+function open(ep) {
+  const params = [...ep.path.matchAll(/\{(\w+)(:\w+)?\}/g)].map(m => m[1]);
+  const hasBody = ep.method === 'POST' || ep.method === 'PUT';
+  panel.innerHTML = `<h2>${action(ep)}: ${title(ep)}</h2><div style="color:#8a93a8;font-size:12px">${ep.method} ${ep.path}</div>` +
+    params.map(p => `<label>${p}</label><input class="p" data-p="${p}" value="${p === 'id' ? 1 : ''}" />`).join('') +
+    `<label>Query string (optional, e.g. month=11&amp;year=2026)</label><input class="p" id="qs" />` +
+    (hasBody ? `<label>JSON body (sample filled in, change the values)</label><textarea id="body">${sample(ep, params)}</textarea>` : '') +
+    `<button id="send">Send</button><div class="status" id="st"></div><pre id="out"></pre>`;
+  document.getElementById('send').onclick = async () => {
+    let url = ep.path.replace(/\{(\w+)(:\w+)?\}/g, (_, n) => encodeURIComponent(panel.querySelector(`[data-p="${n}"]`).value));
+    const qs = document.getElementById('qs').value.trim();
+    if (qs) url += '?' + qs;
+    const opt = { method: ep.method, headers: { 'X-Api-Key': document.getElementById('key').value } };
+    if (hasBody) { opt.headers['Content-Type'] = 'application/json'; opt.body = document.getElementById('body').value; }
+    const st = document.getElementById('st'), out = document.getElementById('out');
+    st.textContent = 'Sending...'; out.textContent = '';
+    try {
+      const r = await fetch(url, opt);
+      const text = await r.text();
+      st.textContent = r.status + ' ' + r.statusText;
+      try { out.textContent = JSON.stringify(JSON.parse(text), null, 2); } catch { out.textContent = text || '(no content)'; }
+    } catch (e) { st.textContent = 'Error: ' + e; }
+  };
+}
+</script>
+</body>
+</html>
