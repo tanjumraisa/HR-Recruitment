@@ -1,0 +1,38 @@
+@using HR.Entities
+@model JobApplication
+@{
+    var isNew = Model.ApplicationId == 0;
+    ViewData["Title"] = (isNew ? "Add " : "Edit ") + "application";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="mb-3">@ViewData["Title"]</h4>
+                <form asp-action="@(isNew ? "Create" : "Edit")" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                    @if (!isNew)
+                    {
+                        <input type="hidden" asp-for="ApplicationId" />
+                    }
+                    <div class="row g-3">
+            <div class="col-md-6"><label asp-for="JobOpeningId" class="form-label">Job opening</label><select asp-for="JobOpeningId" class="form-select" asp-items="@((IEnumerable<SelectListItem>)ViewBag.Jobs)"><option value="">-- Select --</option></select><span asp-validation-for="JobOpeningId" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="CandidateId" class="form-label">Candidate</label><select asp-for="CandidateId" class="form-select" asp-items="@((IEnumerable<SelectListItem>)ViewBag.Candidates)"><option value="">-- Select --</option></select><span asp-validation-for="CandidateId" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="Status" class="form-label">Status</label><select asp-for="Status" class="form-select" asp-items="@(new SelectList(ApplicationStatus.All))"></select><span asp-validation-for="Status" class="text-danger"></span></div>
+            <div class="col-12"><label asp-for="CoverLetter" class="form-label">Cover letter</label><textarea asp-for="CoverLetter" class="form-control" rows="3"></textarea><span asp-validation-for="CoverLetter" class="text-danger"></span></div>
+            <div class="col-12"><label asp-for="Notes" class="form-label">HR notes</label><textarea asp-for="Notes" class="form-control" rows="3"></textarea><span asp-validation-for="Notes" class="text-danger"></span></div>
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

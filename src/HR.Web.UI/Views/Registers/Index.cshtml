@@ -1,0 +1,12 @@
+@{
+    ViewData["Title"] = "Registers and forms";
+}
+<h4 class="mb-3">Registers and forms</h4>
+<p class="text-muted">Open a register, choose the filter, then press <strong>Print</strong> (A4, or Save as PDF).</p>
+<div class="row g-3">
+    <div class="col-md-4"><div class="card h-100"><div class="card-body"><h6>Employee Register</h6><p class="small text-muted">All employees with code, department, designation, join date and salary.</p><a asp-action="EmployeeRegister" class="btn btn-outline-primary btn-sm">Open</a></div></div></div>
+    <div class="col-md-4"><div class="card h-100"><div class="card-body"><h6>Leave Register</h6><p class="small text-muted">Leave taken in a date range with type, days and decision.</p><a asp-action="LeaveRegister" class="btn btn-outline-primary btn-sm">Open</a></div></div></div>
+    <div class="col-md-4"><div class="card h-100"><div class="card-body"><h6>Daily Attendance Register</h6><p class="small text-muted">Attendance with in and out time, hours worked and status.</p><a asp-action="AttendanceRegister" class="btn btn-outline-primary btn-sm">Open</a></div></div></div>
+    <div class="col-md-4"><div class="card h-100"><div class="card-body"><h6>Wages and Payslip Register</h6><p class="small text-muted">Monthly basic, allowance, deduction and net pay.</p><a asp-action="WagesRegister" class="btn btn-outline-primary btn-sm">Open</a></div></div></div>
+    <div class="col-md-4"><div class="card h-100"><div class="card-body"><h6>Appointment Letter</h6><p class="small text-muted">Printable letter for one employee.</p><a asp-action="AppointmentLetter" class="btn btn-outline-primary btn-sm">Open</a></div></div></div>
+</div>

@@ -1,0 +1,35 @@
+@using HR.Entities
+@model Candidate
+@{
+    ViewData["Title"] = "My profile";
+    Layout = "_PublicLayout";
+}
+<div class="row justify-content-center"><div class="col-lg-7">
+    <div class="card"><div class="card-body">
+        <h4 class="mb-1">@Model.FullName</h4>
+        <p class="text-muted">@Model.Email</p>
+        <form asp-action="Save" method="post" enctype="multipart/form-data">
+            <div class="row g-3">
+                <div class="col-md-6"><label class="form-label">Phone</label><input name="phone" value="@Model.Phone" class="form-control" maxlength="20" /></div>
+                <div class="col-md-6"><label class="form-label">Experience (years)</label><input name="experienceYears" type="number" min="0" value="@Model.ExperienceYears" class="form-control" /></div>
+                <div class="col-12"><label class="form-label">Skills</label><textarea name="skills" class="form-control" rows="3" maxlength="500">@Model.Skills</textarea></div>
+                <div class="col-12">
+                    <label class="form-label">CV / Resume (PDF or DOCX, max 5 MB)</label>
+                    <input name="resume" type="file" accept=".pdf,.docx" class="form-control" />
+                    @if (Model.ResumeFileName != null)
+                    {
+                        <div class="form-text">Current CV:
+                            <a asp-controller="Resumes" asp-action="Download" asp-route-id="@Model.CandidateId">@Model.ResumeFileName</a>.
+                            Uploading a new file replaces it.</div>
+                    }
+                    else
+                    {
+                        <div class="form-text text-danger">No CV uploaded yet.</div>
+                    }
+                </div>
+            </div>
+            <button class="btn btn-primary mt-4">Save profile</button>
+            <a asp-controller="Careers" asp-action="Index" class="btn btn-outline-secondary mt-4">Browse jobs</a>
+        </form>
+    </div></div>
+</div></div>

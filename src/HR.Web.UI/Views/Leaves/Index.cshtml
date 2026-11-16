@@ -1,0 +1,49 @@
+@using HR.Entities
+@model List<LeaveRequest>
+@{
+    ViewData["Title"] = "Leave requests";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Leave requests</h4>
+    @if (User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.HRManager) || User.IsInRole(RoleNames.Employee))
+    {
+        <a asp-action="Create" class="btn btn-primary">+ Add</a>
+    }
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead><tr><th>Employee</th><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Status</th><th>Decided by</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var x in Model)
+                {
+                    <tr>
+                        <td>@x.Employee.User.FullName</td><td>@x.LeaveType.Name</td><td>@x.FromDate.ToString("yyyy-MM-dd")</td><td>@x.ToDate.ToString("yyyy-MM-dd")</td><td>@x.TotalDays</td><td><span class="badge bg-secondary">@x.Status</span></td><td>@(x.ApprovedBy?.User.FullName ?? "-")</td>
+                        <td class="text-end text-nowrap">
+                        
+                        @if (x.Status == LeaveStatus.Pending && (User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.HRManager)))
+                        {
+                            <form asp-action="Decide" method="post" class="d-inline"><input type="hidden" name="id" value="@x.LeaveRequestId" /><input type="hidden" name="approve" value="true" /><button class="btn btn-sm btn-outline-success">Approve</button></form>
+                            <form asp-action="Decide" method="post" class="d-inline"><input type="hidden" name="id" value="@x.LeaveRequestId" /><input type="hidden" name="approve" value="false" /><button class="btn btn-sm btn-outline-danger">Reject</button></form>
+                        }
+                            @if (User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.HRManager))
+                            {
+                                <a asp-action="Edit" asp-route-id="@x.LeaveRequestId" class="btn btn-sm btn-outline-secondary">Edit</a>
+                            }
+                            @if (User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.HRManager))
+                            {
+                                <a asp-action="Delete" asp-route-id="@x.LeaveRequestId" class="btn btn-sm btn-outline-danger">Delete</a>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="8" class="text-center text-muted py-4">No records found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,32 @@
+@using HR.Entities
+@model List<Attendance>
+@{
+    var from = (DateTime)ViewBag.From; var to = (DateTime)ViewBag.To;
+    ViewData["Title"] = "Daily Attendance Register";
+    ViewData["Subtitle"] = "From " + from.ToString("dd/MM/yyyy") + " to " + to.ToString("dd/MM/yyyy");
+}
+<form method="get" class="no-print row g-2 align-items-end mb-3">
+    <div class="col-auto"><label class="form-label mb-0">From</label><input type="date" name="from" value="@from.ToString("yyyy-MM-dd")" class="form-control" /></div>
+    <div class="col-auto"><label class="form-label mb-0">To</label><input type="date" name="to" value="@to.ToString("yyyy-MM-dd")" class="form-control" /></div>
+    <div class="col-auto"><label class="form-label mb-0">Employee</label>
+        <select name="employeeId" class="form-select" asp-items="@((IEnumerable<SelectListItem>)ViewBag.Employees)"><option value="">All</option></select></div>
+    <div class="col-auto"><button class="btn btn-outline-primary">Show</button> <button type="button" onclick="window.print()" class="btn btn-primary">Print / Save as PDF</button></div>
+</form>
+<div class="register-sheet">
+    <partial name="_RegisterHeader" />
+    <table class="table table-sm mb-0">
+        <thead><tr><th>#</th><th>Code</th><th>Name</th><th>Date</th><th>In</th><th>Out</th><th>Hours</th><th>Status</th></tr></thead>
+        <tbody>
+        @{ var i = 1; }
+        @foreach (var a in Model)
+        {
+            <tr><td>@(i++)</td><td>@a.Employee.EmployeeCode</td><td>@a.Employee.User.FullName</td><td>@a.Date.ToString("dd/MM/yyyy")</td>
+                <td>@(a.CheckIn?.ToString(@"hh\:mm") ?? "-")</td><td>@(a.CheckOut?.ToString(@"hh\:mm") ?? "-")</td>
+                <td>@((a.CheckIn.HasValue && a.CheckOut.HasValue) ? (a.CheckOut.Value - a.CheckIn.Value).TotalHours.ToString("0.0") : "-")</td>
+                <td>@a.Status</td></tr>
+        }
+        @if (!Model.Any()) { <tr><td colspan="8" class="text-center text-muted">No attendance in this period.</td></tr> }
+        </tbody>
+    </table>
+    <partial name="_RegisterFooter" />
+</div>

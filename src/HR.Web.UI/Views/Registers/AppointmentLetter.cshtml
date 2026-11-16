@@ -1,0 +1,31 @@
+@using HR.Entities
+@model Employee?
+@{
+    ViewData["Title"] = "Appointment Letter";
+}
+<form method="get" class="no-print row g-2 align-items-end mb-3">
+    <div class="col-auto"><label class="form-label mb-0">Employee</label>
+        <select name="employeeId" class="form-select" asp-items="@((IEnumerable<SelectListItem>)ViewBag.Employees)"><option value="">-- Select --</option></select></div>
+    <div class="col-auto"><button class="btn btn-outline-primary">Show</button>
+        @if (Model != null) { <button type="button" onclick="window.print()" class="btn btn-primary">Print / Save as PDF</button> }</div>
+</form>
+@if (Model != null)
+{
+    <div class="register-sheet letter">
+        <div class="text-center mb-4">
+            <h4 class="mb-0">@ViewBag.Company</h4>
+            <div class="text-muted">@ViewBag.Address</div>
+        </div>
+        <p>Ref: @Model.EmployeeCode<br />Date: @DateTime.Today.ToString("dd MMMM yyyy")</p>
+        <p>To<br /><strong>@Model.User.FullName</strong><br />@Model.Address</p>
+        <p><strong>Subject: Appointment as @Model.Designation.Title</strong></p>
+        <p>Dear @Model.User.FullName,</p>
+        <p>We are pleased to appoint you as <strong>@Model.Designation.Title</strong> in the <strong>@Model.Department.Name</strong> department
+           of @ViewBag.Company with effect from <strong>@Model.JoinDate.ToString("dd MMMM yyyy")</strong>.</p>
+        <p>Your monthly gross salary will be <strong>BDT @Model.Salary.ToString("N2")</strong>@(Model.Manager != null ? $", and you will report to {Model.Manager.EmployeeCode}" : "").
+           Other terms and conditions (probation, working hours, leave, notice period) will follow the company policy and the applicable labour law.</p>
+        <p>Please sign and return the duplicate copy of this letter as your acceptance.</p>
+        <p class="mt-5">Yours sincerely,</p>
+        <div class="sign"><div>Authorised signature</div><div></div><div>Employee acceptance</div></div>
+    </div>
+}

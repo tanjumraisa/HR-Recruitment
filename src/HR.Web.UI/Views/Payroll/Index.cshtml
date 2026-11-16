@@ -1,0 +1,56 @@
+@using HR.Entities
+@model List<Payroll>
+@{
+    ViewData["Title"] = "Payroll";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Payroll</h4>
+    @if (User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.HRManager))
+    {
+        <a asp-action="Create" class="btn btn-primary">+ Add</a>
+    }
+</div>
+
+    @if (User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.HRManager))
+    {
+        <form asp-action="GenerateAll" method="post" class="row g-2 align-items-end mb-3">
+            <div class="col-auto"><label class="form-label mb-0">Month</label><input name="month" type="number" min="1" max="12" value="@DateTime.Today.Month" class="form-control" /></div>
+            <div class="col-auto"><label class="form-label mb-0">Year</label><input name="year" type="number" value="@DateTime.Today.Year" class="form-control" /></div>
+            <div class="col-auto"><button class="btn btn-outline-primary">Generate for all active employees</button></div>
+        </form>
+    }
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead><tr><th>Employee</th><th>Period</th><th>Basic</th><th>Allowance</th><th>Deduction</th><th>Net</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var x in Model)
+                {
+                    <tr>
+                        <td>@x.Employee.User.FullName</td><td>@x.Month.ToMonthName() @x.Year</td><td>@x.BasicSalary.ToString("N2")</td><td>@x.Allowance.ToString("N2")</td><td>@x.Deduction.ToString("N2")</td><td>@x.NetSalary.ToString("N2")</td><td><span class="badge bg-secondary">@x.Status</span></td>
+                        <td class="text-end text-nowrap">
+                        
+                        @if (x.Status == PayrollStatus.Generated && (User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.HRManager)))
+                        {
+                            <form asp-action="MarkPaid" method="post" class="d-inline"><input type="hidden" name="id" value="@x.PayrollId" /><button class="btn btn-sm btn-outline-success">Mark paid</button></form>
+                        }
+                            @if (User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.HRManager))
+                            {
+                                <a asp-action="Edit" asp-route-id="@x.PayrollId" class="btn btn-sm btn-outline-secondary">Edit</a>
+                            }
+                            @if (User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.HRManager))
+                            {
+                                <a asp-action="Delete" asp-route-id="@x.PayrollId" class="btn btn-sm btn-outline-danger">Delete</a>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="8" class="text-center text-muted py-4">No records found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

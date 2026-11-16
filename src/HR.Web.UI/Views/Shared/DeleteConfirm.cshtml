@@ -1,0 +1,19 @@
+@model HR.Web.UI.Models.DeleteViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-body">
+                <h4 class="text-danger">@Model.Title</h4>
+                <p class="mb-4">Are you sure you want to delete <strong>@Model.Message</strong>? This cannot be undone.</p>
+                <form asp-action="Delete" method="post">
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <button type="submit" class="btn btn-danger">Yes, delete</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

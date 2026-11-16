@@ -1,0 +1,38 @@
+@using HR.Entities
+@model Attendance
+@{
+    var isNew = Model.AttendanceId == 0;
+    ViewData["Title"] = (isNew ? "Add " : "Edit ") + "attendance record";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="mb-3">@ViewData["Title"]</h4>
+                <form asp-action="@(isNew ? "Create" : "Edit")" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                    @if (!isNew)
+                    {
+                        <input type="hidden" asp-for="AttendanceId" />
+                    }
+                    <div class="row g-3">
+            <div class="col-md-6"><label asp-for="EmployeeId" class="form-label">Employee</label><select asp-for="EmployeeId" class="form-select" asp-items="@((IEnumerable<SelectListItem>)ViewBag.Employees)"><option value="">-- Select --</option></select><span asp-validation-for="EmployeeId" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="Date" class="form-label">Date</label><input asp-for="Date" type="date" class="form-control" /><span asp-validation-for="Date" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="CheckIn" class="form-label">Check in</label><input asp-for="CheckIn" type="time" class="form-control" /><span asp-validation-for="CheckIn" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="CheckOut" class="form-label">Check out</label><input asp-for="CheckOut" type="time" class="form-control" /><span asp-validation-for="CheckOut" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="Status" class="form-label">Status</label><select asp-for="Status" class="form-select" asp-items="@(new SelectList(AttendanceStatus.All))"></select><span asp-validation-for="Status" class="text-danger"></span></div>
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

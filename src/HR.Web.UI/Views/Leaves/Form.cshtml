@@ -1,0 +1,45 @@
+@using HR.Entities
+@model LeaveRequest
+@{
+    var isNew = Model.LeaveRequestId == 0;
+    ViewData["Title"] = (isNew ? "Add " : "Edit ") + "leave request";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="mb-3">@ViewData["Title"]</h4>
+                <form asp-action="@(isNew ? "Create" : "Edit")" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                    @if (!isNew)
+                    {
+                        <input type="hidden" asp-for="LeaveRequestId" />
+                    }
+                    <div class="row g-3">
+            @if (!User.IsInRole(RoleNames.Employee))
+            {
+                <div class="col-md-6"><label asp-for="EmployeeId" class="form-label">Employee</label><select asp-for="EmployeeId" class="form-select" asp-items="@((IEnumerable<SelectListItem>)ViewBag.Employees)"><option value="">-- Select --</option></select><span asp-validation-for="EmployeeId" class="text-danger"></span></div>
+            }
+            <div class="col-md-6"><label asp-for="LeaveTypeId" class="form-label">Leave type</label><select asp-for="LeaveTypeId" class="form-select" asp-items="@((IEnumerable<SelectListItem>)ViewBag.LeaveTypes)"><option value="">-- Select --</option></select><span asp-validation-for="LeaveTypeId" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="FromDate" class="form-label">From</label><input asp-for="FromDate" type="date" class="form-control" /><span asp-validation-for="FromDate" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="ToDate" class="form-label">To</label><input asp-for="ToDate" type="date" class="form-control" /><span asp-validation-for="ToDate" class="text-danger"></span></div>
+            <div class="col-12"><label asp-for="Reason" class="form-label">Reason</label><textarea asp-for="Reason" class="form-control" rows="3"></textarea><span asp-validation-for="Reason" class="text-danger"></span></div>
+            @if (!User.IsInRole(RoleNames.Employee))
+            {
+                <div class="col-md-6"><label asp-for="Status" class="form-label">Status</label><select asp-for="Status" class="form-select" asp-items="@(new SelectList(LeaveStatus.All))"></select><span asp-validation-for="Status" class="text-danger"></span></div>
+            }
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

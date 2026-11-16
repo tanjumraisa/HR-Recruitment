@@ -1,0 +1,35 @@
+@using HR.Entities
+@model List<Payroll>
+@{
+    var m = (int)ViewBag.Month; var y = (int)ViewBag.Year;
+    ViewData["Title"] = "Wages and Payslip Register";
+    ViewData["Subtitle"] = m.ToMonthName() + " " + y;
+}
+<form method="get" class="no-print row g-2 align-items-end mb-3">
+    <div class="col-auto"><label class="form-label mb-0">Month</label><input type="number" name="month" min="1" max="12" value="@m" class="form-control" /></div>
+    <div class="col-auto"><label class="form-label mb-0">Year</label><input type="number" name="year" value="@y" class="form-control" /></div>
+    <div class="col-auto"><button class="btn btn-outline-primary">Show</button> <button type="button" onclick="window.print()" class="btn btn-primary">Print / Save as PDF</button></div>
+</form>
+<div class="register-sheet">
+    <partial name="_RegisterHeader" />
+    <table class="table table-sm mb-0">
+        <thead><tr><th>#</th><th>Code</th><th>Name</th><th class="text-end">Basic</th><th class="text-end">Allowance</th><th class="text-end">Deduction</th><th class="text-end">Net pay</th><th>Status</th><th>Signature</th></tr></thead>
+        <tbody>
+        @{ var i = 1; }
+        @foreach (var p in Model)
+        {
+            <tr><td>@(i++)</td><td>@p.Employee.EmployeeCode</td><td>@p.Employee.User.FullName</td>
+                <td class="text-end">@p.BasicSalary.ToString("N2")</td><td class="text-end">@p.Allowance.ToString("N2")</td>
+                <td class="text-end">@p.Deduction.ToString("N2")</td><td class="text-end">@p.NetSalary.ToString("N2")</td><td>@p.Status</td><td></td></tr>
+        }
+        @if (Model.Any())
+        {
+            <tr class="fw-bold"><td colspan="3" class="text-end">Total</td>
+                <td class="text-end">@Model.Sum(x => x.BasicSalary).ToString("N2")</td><td class="text-end">@Model.Sum(x => x.Allowance).ToString("N2")</td>
+                <td class="text-end">@Model.Sum(x => x.Deduction).ToString("N2")</td><td class="text-end">@Model.Sum(x => x.NetSalary).ToString("N2")</td><td colspan="2"></td></tr>
+        }
+        else { <tr><td colspan="9" class="text-center text-muted">No payroll for this month. Generate it from the Payroll page first.</td></tr> }
+        </tbody>
+    </table>
+    <partial name="_RegisterFooter" />
+</div>

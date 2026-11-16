@@ -1,0 +1,60 @@
+@using HR.Entities
+@model JobApplication
+@{
+    ViewData["Title"] = "Application details";
+    var interviews = (List<Interview>)ViewBag.Interviews;
+    var offer = ViewBag.Offer as OfferLetter;
+    var manual = ApplicationStatus.NextOf(Model.Status)
+        .Where(s => s == ApplicationStatus.Shortlisted || s == ApplicationStatus.Rejected);
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">@Model.Candidate.FullName <small class="text-muted">for @Model.JobOpening.Title</small></h4>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">Back</a>
+</div>
+<div class="row g-3">
+    <div class="col-md-6"><div class="card"><div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-5">Status</dt><dd class="col-7"><span class="badge bg-primary">@Model.Status</span></dd>
+            <dt class="col-5">Applied</dt><dd class="col-7">@Model.AppliedAt.ToString("yyyy-MM-dd")</dd>
+            <dt class="col-5">Email</dt><dd class="col-7">@Model.Candidate.Email</dd>
+            <dt class="col-5">Phone</dt><dd class="col-7">@Model.Candidate.Phone</dd>
+            <dt class="col-5">Experience</dt><dd class="col-7">@Model.Candidate.ExperienceYears year(s)</dd>
+            <dt class="col-5">Skills</dt><dd class="col-7">@Model.Candidate.Skills</dd>
+            <dt class="col-5">CV</dt><dd class="col-7">@if (Model.Candidate.ResumeFileName != null) { <a asp-controller="Resumes" asp-action="Download" asp-route-id="@Model.Candidate.CandidateId">@Model.Candidate.ResumeFileName</a> } else { <span class="text-muted">Not uploaded</span> }</dd>
+        </dl>
+        @foreach (var s in manual)
+        {
+            <form asp-action="ChangeStatus" method="post" class="d-inline">
+                <input type="hidden" name="id" value="@Model.ApplicationId" /><input type="hidden" name="status" value="@s" />
+                <button class="btn btn-sm @(s == ApplicationStatus.Rejected ? "btn-outline-danger" : "btn-outline-success") mt-3">Mark @s</button>
+            </form>
+        }
+        @if (Model.Status == ApplicationStatus.Shortlisted || Model.Status == ApplicationStatus.Interview)
+        {
+            <a asp-controller="Interviews" asp-action="Create" class="btn btn-sm btn-primary mt-3">Schedule interview</a>
+        }
+        @if (Model.Status == ApplicationStatus.Interview && offer == null && (User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.HRManager)))
+        {
+            <a asp-controller="Offers" asp-action="Create" class="btn btn-sm btn-success mt-3">Issue offer</a>
+        }
+    </div></div></div>
+    <div class="col-md-6"><div class="card"><div class="card-body">
+        <h6>Cover letter</h6><p style="white-space: pre-line">@Model.CoverLetter</p>
+        <h6>HR notes</h6><p style="white-space: pre-line">@Model.Notes</p>
+    </div></div></div>
+    <div class="col-12"><div class="card"><div class="card-body">
+        <h6>Interviews</h6>
+        <table class="table table-sm mb-0"><thead><tr><th>When</th><th>Interviewer</th><th>Mode</th><th>Status</th><th>Score</th></tr></thead><tbody>
+        @foreach (var i in interviews)
+        {
+            <tr><td>@i.ScheduledAt.ToString("yyyy-MM-dd HH:mm")</td><td>@i.Interviewer.User.FullName</td><td>@i.Mode</td><td>@i.Status</td><td>@(i.Score?.ToString() ?? "-")</td></tr>
+        }
+        @if (!interviews.Any()) { <tr><td colspan="5" class="text-muted">No interviews yet.</td></tr> }
+        </tbody></table>
+        @if (offer != null)
+        {
+            <hr /><h6>Offer</h6>
+            <p class="mb-0">Salary @offer.OfferedSalary.ToString("N2"), joining @offer.JoiningDate.ToString("yyyy-MM-dd"), status <span class="badge bg-secondary">@offer.Status</span></p>
+        }
+    </div></div></div>
+</div>

@@ -1,0 +1,38 @@
+@using HR.Entities
+@model Candidate
+@{
+    var isNew = Model.CandidateId == 0;
+    ViewData["Title"] = (isNew ? "Add " : "Edit ") + "candidate";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="mb-3">@ViewData["Title"]</h4>
+                <form asp-action="@(isNew ? "Create" : "Edit")" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                    @if (!isNew)
+                    {
+                        <input type="hidden" asp-for="CandidateId" />
+                    }
+                    <div class="row g-3">
+            <div class="col-md-6"><label asp-for="FullName" class="form-label">Full name</label><input asp-for="FullName" class="form-control" /><span asp-validation-for="FullName" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="Email" class="form-label">Email</label><input asp-for="Email" class="form-control" /><span asp-validation-for="Email" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="Phone" class="form-label">Phone</label><input asp-for="Phone" class="form-control" /><span asp-validation-for="Phone" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="ExperienceYears" class="form-label">Experience (years)</label><input asp-for="ExperienceYears" class="form-control" /><span asp-validation-for="ExperienceYears" class="text-danger"></span></div>
+            <div class="col-12"><label asp-for="Skills" class="form-label">Skills</label><textarea asp-for="Skills" class="form-control" rows="3"></textarea><span asp-validation-for="Skills" class="text-danger"></span></div>
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

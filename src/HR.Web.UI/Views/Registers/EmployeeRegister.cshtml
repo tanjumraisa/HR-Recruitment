@@ -1,0 +1,26 @@
+@using HR.Entities
+@model List<Employee>
+@{
+    ViewData["Title"] = "Employee Register";
+    ViewData["Subtitle"] = "Total employees: " + Model.Count;
+}
+<form method="get" class="no-print row g-2 align-items-end mb-3">
+    <div class="col-auto"><label class="form-label mb-0">Department</label>
+        <select name="departmentId" class="form-select" asp-items="@((IEnumerable<SelectListItem>)ViewBag.Departments)"><option value="">All</option></select></div>
+    <div class="col-auto"><button class="btn btn-outline-primary">Show</button> <button type="button" onclick="window.print()" class="btn btn-primary">Print / Save as PDF</button></div>
+</form>
+<div class="register-sheet">
+    <partial name="_RegisterHeader" />
+    <table class="table table-sm mb-0">
+        <thead><tr><th>#</th><th>Code</th><th>Name</th><th>Department</th><th>Designation</th><th>Join date</th><th>Salary</th><th>Status</th></tr></thead>
+        <tbody>
+        @{ var i = 1; }
+        @foreach (var e in Model)
+        {
+            <tr><td>@(i++)</td><td>@e.EmployeeCode</td><td>@e.User.FullName</td><td>@e.Department.Name</td><td>@e.Designation.Title</td>
+                <td>@e.JoinDate.ToString("dd/MM/yyyy")</td><td class="text-end">@e.Salary.ToString("N2")</td><td>@e.Status</td></tr>
+        }
+        </tbody>
+    </table>
+    <partial name="_RegisterFooter" />
+</div>

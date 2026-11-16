@@ -1,0 +1,26 @@
+@using HR.Entities
+@model List<User>
+@{
+    ViewData["Title"] = "Users";
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Users</h4>
+    <a asp-action="Create" class="btn btn-primary">+ Add staff user</a>
+</div>
+<div class="card"><div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+    <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Active</th><th></th></tr></thead>
+    <tbody>
+    @foreach (var u in Model)
+    {
+        <tr>
+            <td>@u.FullName</td><td>@u.Email</td><td><span class="badge bg-secondary">@u.Role.RoleName</span></td>
+            <td>@(u.IsActive ? "Yes" : "No")</td>
+            <td class="text-end">
+                <a asp-action="Edit" asp-route-id="@u.UserId" class="btn btn-sm btn-outline-secondary">Edit</a>
+                <a asp-action="Delete" asp-route-id="@u.UserId" class="btn btn-sm btn-outline-danger">Delete</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table></div></div>

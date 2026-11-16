@@ -1,0 +1,29 @@
+@using HR.Entities
+@model JobOpening
+@{
+    ViewData["Title"] = Model.Title;
+    Layout = "_PublicLayout";
+}
+<div class="card"><div class="card-body">
+    <h3>@Model.Title</h3>
+    <div class="text-muted mb-3">@Model.Department.Name &middot; @Model.Designation.Title &middot; @Model.EmploymentType</div>
+    <dl class="row">
+        <dt class="col-sm-3">Vacancies</dt><dd class="col-sm-9">@Model.Vacancies</dd>
+        <dt class="col-sm-3">Salary range</dt><dd class="col-sm-9">@Model.SalaryMin.ToString("N0") - @Model.SalaryMax.ToString("N0")</dd>
+        <dt class="col-sm-3">Deadline</dt><dd class="col-sm-9">@Model.Deadline.ToString("dd MMM yyyy")</dd>
+    </dl>
+    <h6>Description</h6><p style="white-space: pre-line">@Model.Description</p>
+    @if (!string.IsNullOrWhiteSpace(Model.Requirements))
+    {
+        <h6>Requirements</h6><p style="white-space: pre-line">@Model.Requirements</p>
+    }
+    @if (User.IsInRole(RoleNames.Candidate))
+    {
+        <a asp-action="Apply" asp-route-id="@Model.JobOpeningId" class="btn btn-primary">Apply now</a>
+    }
+    else if (User.Identity?.IsAuthenticated != true)
+    {
+        <a href="/login?returnUrl=@Uri.EscapeDataString("/Careers/Details/" + Model.JobOpeningId)" class="btn btn-primary">Login to apply</a>
+        <a href="/register" class="btn btn-outline-secondary">Register</a>
+    }
+</div></div>

@@ -1,0 +1,41 @@
+@using HR.Entities
+@model Interview
+@{
+    var isNew = Model.InterviewId == 0;
+    ViewData["Title"] = (isNew ? "Add " : "Edit ") + "interview";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="mb-3">@ViewData["Title"]</h4>
+                <form asp-action="@(isNew ? "Create" : "Edit")" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                    @if (!isNew)
+                    {
+                        <input type="hidden" asp-for="InterviewId" />
+                    }
+                    <div class="row g-3">
+            <div class="col-md-6"><label asp-for="ApplicationId" class="form-label">Application</label><select asp-for="ApplicationId" class="form-select" asp-items="@((IEnumerable<SelectListItem>)ViewBag.Applications)"><option value="">-- Select --</option></select><span asp-validation-for="ApplicationId" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="InterviewerId" class="form-label">Interviewer</label><select asp-for="InterviewerId" class="form-select" asp-items="@((IEnumerable<SelectListItem>)ViewBag.Interviewers)"><option value="">-- Select --</option></select><span asp-validation-for="InterviewerId" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="ScheduledAt" class="form-label">Date & time</label><input asp-for="ScheduledAt" type="datetime-local" class="form-control" /><span asp-validation-for="ScheduledAt" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="Mode" class="form-label">Mode</label><select asp-for="Mode" class="form-select" asp-items="@(new SelectList(InterviewStatus.Modes))"></select><span asp-validation-for="Mode" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="Location" class="form-label">Location / link</label><input asp-for="Location" class="form-control" /><span asp-validation-for="Location" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="Status" class="form-label">Status</label><select asp-for="Status" class="form-select" asp-items="@(new SelectList(InterviewStatus.All))"></select><span asp-validation-for="Status" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="Score" class="form-label">Score (1-10)</label><input asp-for="Score" class="form-control" /><span asp-validation-for="Score" class="text-danger"></span></div>
+            <div class="col-12"><label asp-for="Feedback" class="form-label">Feedback</label><textarea asp-for="Feedback" class="form-control" rows="3"></textarea><span asp-validation-for="Feedback" class="text-danger"></span></div>
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

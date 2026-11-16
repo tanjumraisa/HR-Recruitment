@@ -1,0 +1,19 @@
+@using HR.Entities
+@model JobOpening
+@{
+    ViewData["Title"] = "Apply";
+    Layout = "_PublicLayout";
+}
+<div class="row justify-content-center"><div class="col-lg-7">
+    <div class="card"><div class="card-body">
+        <h4>Apply for @Model.Title</h4>
+        <form asp-action="Apply" asp-route-id="@Model.JobOpeningId" method="post">
+            <div class="mb-3">
+                <label class="form-label">Cover letter</label>
+                <textarea name="coverLetter" class="form-control" rows="6" maxlength="2000"></textarea>
+            </div>
+            <button class="btn btn-primary">Submit application</button>
+            <a asp-action="Details" asp-route-id="@Model.JobOpeningId" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    </div></div>
+</div></div>

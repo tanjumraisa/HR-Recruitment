@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/Business/">
+    <Project Path="HR.Facade/HR.Facade.csproj" />
+  </Folder>
+  <Folder Name="/Library/">
+    <Project Path="HR.DataAccess/HR.DataAccess.csproj" />
+    <Project Path="HR.Entities/HR.Entities.csproj" />
+    <Project Path="HR.Framework/HR.Framework.csproj" />
+  </Folder>
+  <Folder Name="/Presentation/">
+    <Project Path="HR.Web.UI/HR.Web.UI.csproj" />
+  </Folder>
+</Solution>

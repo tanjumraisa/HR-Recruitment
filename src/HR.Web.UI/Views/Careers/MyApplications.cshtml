@@ -1,0 +1,18 @@
+@using HR.Entities
+@model List<JobApplication>
+@{
+    ViewData["Title"] = "My applications";
+    Layout = "_PublicLayout";
+}
+<h3 class="mb-3">My applications</h3>
+<div class="card"><div class="table-responsive">
+<table class="table mb-0">
+    <thead><tr><th>Job</th><th>Applied</th><th>Status</th></tr></thead>
+    <tbody>
+    @foreach (var a in Model)
+    {
+        <tr><td>@a.JobOpening.Title</td><td>@a.AppliedAt.ToString("yyyy-MM-dd")</td><td><span class="badge bg-secondary">@a.Status</span></td></tr>
+    }
+    @if (!Model.Any()) { <tr><td colspan="3" class="text-center text-muted py-4">You have not applied for any job yet. <a asp-action="Index">Browse jobs</a></td></tr> }
+    </tbody>
+</table></div></div>
