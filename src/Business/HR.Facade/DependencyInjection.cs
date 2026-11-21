@@ -72,6 +72,7 @@ namespace HR.Facade
             services.AddScoped<INotificationFacade, NotificationFacade>();
             services.AddScoped<IAuditLogFacade, AuditLogFacade>();
             services.AddScoped<IDemoDataFacade, DemoDataFacade>();
+            services.AddScoped<IPermissionFacade, PermissionFacade>();
 
             return services;
         }

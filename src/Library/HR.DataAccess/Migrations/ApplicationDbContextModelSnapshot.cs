@@ -688,6 +688,47 @@ namespace HR.DataAccess.Migrations
                     b.ToTable("CanteenMeals");
                 });
 
+            modelBuilder.Entity("HR.Entities.Company", b =>
+                {
+                    b.Property<int>("CompanyId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CompanyId"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("CompanyId");
+
+                    b.ToTable("Companies");
+
+                    b.HasData(
+                        new
+                        {
+                            CompanyId = 1,
+                            IsActive = true,
+                            Name = "My Company"
+                        });
+                });
+
             modelBuilder.Entity("HR.Entities.CompensatoryLeave", b =>
                 {
                     b.Property<int>("CompensatoryLeaveId")
@@ -3607,6 +3648,99 @@ namespace HR.DataAccess.Migrations
                     b.ToTable("PerformanceReviews");
                 });
 
+            modelBuilder.Entity("HR.Entities.Permission", b =>
+                {
+                    b.Property<int>("PermissionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("DisplayText")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("ParentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("PermissionId");
+
+                    b.HasIndex("ParentId");
+
+                    b.HasIndex("CompanyId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("Permissions");
+                });
+
+            modelBuilder.Entity("HR.Entities.PermissionGroup", b =>
+                {
+                    b.Property<int>("PermissionGroupId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PermissionGroupId"));
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Tag")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("PermissionGroupId");
+
+                    b.HasIndex("CompanyId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("PermissionGroups");
+                });
+
+            modelBuilder.Entity("HR.Entities.PermissionGroupMap", b =>
+                {
+                    b.Property<int>("PermissionGroupMapId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PermissionGroupMapId"));
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("PermissionGroupId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PermissionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("PermissionGroupMapId");
+
+                    b.HasIndex("CompanyId");
+
+                    b.HasIndex("PermissionId");
+
+                    b.HasIndex("PermissionGroupId", "PermissionId")
+                        .IsUnique();
+
+                    b.ToTable("PermissionGroupMaps");
+                });
+
             modelBuilder.Entity("HR.Entities.RecruitmentSource", b =>
                 {
                     b.Property<int>("RecruitmentSourceId")
@@ -4622,6 +4756,42 @@ namespace HR.DataAccess.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("HR.Entities.UserPermission", b =>
+                {
+                    b.Property<int>("UserPermissionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserPermissionId"));
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PermissionGroupId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PermissionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserPermissionId");
+
+                    b.HasIndex("CompanyId");
+
+                    b.HasIndex("PermissionGroupId");
+
+                    b.HasIndex("PermissionId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserPermissions", t =>
+                        {
+                            t.HasCheckConstraint("CK_UserPermission_GroupOrPermission", "[PermissionId] IS NOT NULL OR [PermissionGroupId] IS NOT NULL");
+                        });
                 });
 
             modelBuilder.Entity("HR.Entities.WorkFromHomeRequest", b =>
@@ -5718,6 +5888,62 @@ namespace HR.DataAccess.Migrations
                     b.Navigation("Reviewer");
                 });
 
+            modelBuilder.Entity("HR.Entities.Permission", b =>
+                {
+                    b.HasOne("HR.Entities.Company", "Company")
+                        .WithMany("Permissions")
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("HR.Entities.Permission", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Company");
+
+                    b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("HR.Entities.PermissionGroup", b =>
+                {
+                    b.HasOne("HR.Entities.Company", "Company")
+                        .WithMany("PermissionGroups")
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+                });
+
+            modelBuilder.Entity("HR.Entities.PermissionGroupMap", b =>
+                {
+                    b.HasOne("HR.Entities.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("HR.Entities.PermissionGroup", "PermissionGroup")
+                        .WithMany("Maps")
+                        .HasForeignKey("PermissionGroupId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("HR.Entities.Permission", "Permission")
+                        .WithMany("GroupMaps")
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+
+                    b.Navigation("Permission");
+
+                    b.Navigation("PermissionGroup");
+                });
+
             modelBuilder.Entity("HR.Entities.ShiftSwapRequest", b =>
                 {
                     b.HasOne("HR.Entities.Employee", "Requester")
@@ -5869,6 +6095,39 @@ namespace HR.DataAccess.Migrations
                     b.Navigation("Role");
                 });
 
+            modelBuilder.Entity("HR.Entities.UserPermission", b =>
+                {
+                    b.HasOne("HR.Entities.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("HR.Entities.PermissionGroup", "PermissionGroup")
+                        .WithMany("UserPermissions")
+                        .HasForeignKey("PermissionGroupId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("HR.Entities.Permission", "Permission")
+                        .WithMany("UserPermissions")
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("HR.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+
+                    b.Navigation("Permission");
+
+                    b.Navigation("PermissionGroup");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("HR.Entities.WorkFromHomeRequest", b =>
                 {
                     b.HasOne("HR.Entities.Employee", "ApprovedBy")
@@ -5890,6 +6149,13 @@ namespace HR.DataAccess.Migrations
             modelBuilder.Entity("HR.Entities.Candidate", b =>
                 {
                     b.Navigation("Applications");
+                });
+
+            modelBuilder.Entity("HR.Entities.Company", b =>
+                {
+                    b.Navigation("PermissionGroups");
+
+                    b.Navigation("Permissions");
                 });
 
             modelBuilder.Entity("HR.Entities.Department", b =>
@@ -5936,6 +6202,22 @@ namespace HR.DataAccess.Migrations
             modelBuilder.Entity("HR.Entities.LeaveType", b =>
                 {
                     b.Navigation("LeaveRequests");
+                });
+
+            modelBuilder.Entity("HR.Entities.Permission", b =>
+                {
+                    b.Navigation("Children");
+
+                    b.Navigation("GroupMaps");
+
+                    b.Navigation("UserPermissions");
+                });
+
+            modelBuilder.Entity("HR.Entities.PermissionGroup", b =>
+                {
+                    b.Navigation("Maps");
+
+                    b.Navigation("UserPermissions");
                 });
 
             modelBuilder.Entity("HR.Entities.Role", b =>

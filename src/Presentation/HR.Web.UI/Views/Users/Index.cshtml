@@ -18,6 +18,7 @@
             <td>@(u.IsActive ? "Yes" : "No")</td>
             <td class="text-end">
                 <a asp-action="Edit" asp-route-id="@u.UserId" class="btn btn-sm btn-outline-secondary">Edit</a>
+                <a href="/Permissions/Assign/@u.UserId" class="btn btn-sm btn-outline-primary">Permissions</a>
                 <a asp-action="Delete" asp-route-id="@u.UserId" class="btn btn-sm btn-outline-danger">Delete</a>
             </td>
         </tr>

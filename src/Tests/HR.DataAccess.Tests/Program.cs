@@ -42,7 +42,7 @@ Check(model.FindEntityType(typeof(Employee))!.FindProperty(nameof(Employee.Branc
 
 var migrations = db.GetService<IMigrationsAssembly>().Migrations.Keys.ToList();
 Check(migrations.Any(m => m.EndsWith("_AddHrmsModules")), "Migration AddHrmsModules exists");
-Check(migrations.Count == 4 && migrations.Last().EndsWith("_AddHrmsPhase2"), $"Migrations in order: {string.Join(", ", migrations)}");
+Check(migrations.Count == 5 && migrations.Last().EndsWith("_AddUserPermissions"), $"Migrations in order: {string.Join(", ", migrations)}");
 
 Console.WriteLine(failed == 0 ? "All database design checks passed." : $"{failed} check(s) FAILED.");
 return failed == 0 ? 0 : 1;

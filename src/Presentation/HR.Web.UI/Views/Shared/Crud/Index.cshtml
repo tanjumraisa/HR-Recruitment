@@ -1,9 +1,13 @@
+@using HR.Web.UI.Filters
 @using HR.Web.UI.Helpers
 @model CrudIndexViewModel
 @{
     var title = Model.Module?.Title ?? Model.Meta.Title;
     ViewData["Title"] = title;
     var entity = Model.Meta.Type.Name;
+    var canCreate = Context.Can(entity + ".Create");
+    var canEdit = Context.Can(entity + ".Edit");
+    var canDelete = Context.Can(entity + ".Delete");
     var columns = Model.Meta.Fields.Where(f => f.ShowInList).ToList();
     string PageUrl(int p)
     {
@@ -22,7 +26,10 @@
     <div class="d-flex gap-2 no-print">
         <a href="?@exportQuery&export=csv" class="btn btn-outline-secondary btn-sm">Export CSV</a>
         <button type="button" onclick="window.print()" class="btn btn-outline-secondary btn-sm">Print</button>
-        <a asp-action="Create" asp-all-route-data="@Model.Filters.ToDictionary(k => k.Key, k => k.Value.ToString())" class="btn btn-primary btn-sm">+ Add new</a>
+        @if (canCreate)
+        {
+            <a asp-action="Create" asp-all-route-data="@Model.Filters.ToDictionary(k => k.Key, k => k.Value.ToString())" class="btn btn-primary btn-sm">+ Add new</a>
+        }
     </div>
 </div>
 
@@ -86,8 +93,8 @@
                         }
                         <td class="text-end text-nowrap no-print">
                             <a href="/records/@entity/@id" class="btn btn-sm btn-outline-primary">View</a>
-                            <a asp-action="Edit" asp-route-id="@id" class="btn btn-sm btn-outline-secondary">Edit</a>
-                            <a asp-action="Delete" asp-route-id="@id" class="btn btn-sm btn-outline-danger">Delete</a>
+                            @if (canEdit) { <a asp-action="Edit" asp-route-id="@id" class="btn btn-sm btn-outline-secondary">Edit</a> }
+                            @if (canDelete) { <a asp-action="Delete" asp-route-id="@id" class="btn btn-sm btn-outline-danger">Delete</a> }
                         </td>
                     </tr>
                 }

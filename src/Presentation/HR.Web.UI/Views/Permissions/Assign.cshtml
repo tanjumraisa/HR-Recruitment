@@ -1,0 +1,37 @@
+@using HR.Entities
+@using HR.Framework
+@model HR.Web.UI.Controllers.PermissionsController.UserForm
+@{
+    ViewData["Title"] = "Permissions of " + Model.UserName;
+    var all = (List<Permission>)ViewBag.All;
+    var groups = (List<HR.Facade.Interface.PermissionGroupSummary>)ViewBag.Groups;
+}
+<h4 class="mb-1">@Model.UserName</h4>
+<div class="text-muted mb-3">@Model.Email</div>
+@if (Model.RoleId == RoleIds.Admin)
+{
+    <div class="alert alert-info">Admin always has every permission.</div>
+    return;
+}
+<form method="post" asp-action="Assign">
+    <input type="hidden" asp-for="UserId" />
+    <div class="dcard accent mb-3" style="--ac:#7e57c2">
+        <h6>1. Permission groups</h6>
+        <div class="d-flex flex-wrap gap-3">
+            @foreach (var g in groups)
+            {
+                <label class="border rounded px-3 py-2">
+                    <input type="checkbox" name="GroupIds" value="@g.PermissionGroupId" class="form-check-input me-1" checked="@Model.GroupIds.Contains(g.PermissionGroupId)" />
+                    <b>@g.Name</b> <span class="small text-muted">(@g.Permissions)</span>
+                </label>
+            }
+        </div>
+        <div class="small text-muted mt-2">Untick everything (groups and extra boxes) to go back to the normal access of the user's role.</div>
+    </div>
+    <div class="dcard accent mb-3" style="--ac:#ffa726">
+        <h6>2. Extra permissions (outside the groups)</h6>
+        <partial name="_Matrix" model="(all, Model.PermissionIds.ToHashSet())" />
+    </div>
+    <button class="btn btn-primary">Save</button>
+    <a asp-action="Index" class="btn btn-link">Cancel</a>
+</form>

@@ -1,0 +1,55 @@
+@using HR.Entities
+@model (List<Permission> All, HashSet<int> Selected)
+@{
+    // Tree: Menu (ParentId = null) -> Screen -> Action (View / Create / Edit / Delete)
+    var byParent = Model.All.Where(p => p.ParentId != null).GroupBy(p => p.ParentId!.Value).ToDictionary(g => g.Key, g => g.ToList());
+    var menus = Model.All.Where(p => p.ParentId == null).ToList();
+    string[] ops = { "View", "Create", "Edit", "Delete" };
+}
+<div class="table-responsive perm-matrix">
+    <table class="table table-sm align-middle mb-0">
+        <thead class="table-light sticky-top">
+            <tr><th>Screen</th>@foreach (var o in ops) { <th class="text-center" style="width:90px">@o</th> }<th class="text-center" style="width:70px">All</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var menu in menus)
+            {
+                if (!byParent.TryGetValue(menu.PermissionId, out var children)) { continue; }
+                <tr class="perm-menu"><td colspan="6"><label><input type="checkbox" class="form-check-input me-1 js-all" data-scope="m@(menu.PermissionId)" /> <b>@menu.DisplayText</b></label></td></tr>
+                foreach (var screen in children)
+                {
+                    var acts = byParent.TryGetValue(screen.PermissionId, out var a) ? a : new List<Permission>();
+                    if (acts.Count == 0)
+                    {
+                        // Leaf permission directly under a menu (e.g. Reports.View)
+                        <tr class="m@(menu.PermissionId)"><td class="ps-4">@screen.DisplayText</td>
+                            <td class="text-center"><input type="checkbox" name="PermissionIds" value="@screen.PermissionId" class="form-check-input" checked="@Model.Selected.Contains(screen.PermissionId)" /></td>
+                            <td colspan="4"></td></tr>
+                        continue;
+                    }
+                    <tr class="m@(menu.PermissionId)">
+                        <td class="ps-4">@screen.DisplayText</td>
+                        @foreach (var o in ops)
+                        {
+                            var p = acts.FirstOrDefault(x => x.Name.EndsWith("." + o));
+                            <td class="text-center">@if (p != null) { <input type="checkbox" name="PermissionIds" value="@p.PermissionId" class="form-check-input s@(screen.PermissionId)" checked="@Model.Selected.Contains(p.PermissionId)" /> }</td>
+                        }
+                        <td class="text-center"><input type="checkbox" class="form-check-input js-all" data-scope="s@(screen.PermissionId)" /></td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+<script>
+    // "All" boxes tick / untick every box of a row (s..) or of a whole menu (m..).
+    document.querySelectorAll('.js-all').forEach(function (box) {
+        box.addEventListener('change', function () {
+            var scope = box.dataset.scope;
+            var targets = scope[0] === 'm'
+                ? document.querySelectorAll('tr.' + scope + ' input[type=checkbox]')
+                : document.querySelectorAll('input.' + scope);
+            targets.forEach(function (t) { t.checked = box.checked; });
+        });
+    });
+</script>

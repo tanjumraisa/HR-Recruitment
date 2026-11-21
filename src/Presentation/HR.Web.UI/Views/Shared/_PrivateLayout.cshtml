@@ -1,3 +1,4 @@
+@using HR.Web.UI.Filters
 @using HR.Web.UI.Helpers
 @{
     var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
@@ -42,7 +43,7 @@
             <a class="mm-link @(controller == "Dashboard" ? "active" : "")" href="/Dashboard">&#8962; Home</a>
             @foreach (var g in ModuleRegistry.Groups)
             {
-                var items = ModuleRegistry.InGroup(g.Key, User).ToList();
+                var items = ModuleRegistry.InGroup(g.Key, User).Where(i => Context.Can(i.Entity + ".View")).ToList();
                 if (!items.Any()) { continue; }
                 var active = items.Any(i => i.Controller == controller);
                 <div class="dd">
@@ -53,10 +54,11 @@
                             <a href="/@i.Controller" class="@(i.Controller == controller ? "current" : "")">@i.Title</a>
                         }
                         @if (g.Key == "Settings" && isStaff) { <a href="/records">Database overview</a> }
+                        @if (g.Key == "Settings" && User.IsInRole(RoleNames.Admin)) { <a href="/Permissions">User permissions</a> }
                     </div>
                 </div>
             }
-            @if (isStaff)
+            @if (isStaff && Context.Can("Reports.View"))
             {
                 <div class="dd">
                     <a href="#" onclick="return false;" class="mm-link @(controller == "Reports" ? "active" : "")">All Reports &#9662;</a>
@@ -81,7 +83,7 @@
                     </div>
                 </div>
             }
-            @if (isHr)
+            @if (isHr && Context.Can("Registers.View"))
             {
                 <div class="dd">
                     <a href="#" onclick="return false;" class="mm-link @(controller == "Registers" ? "active" : "")">All Registers &#9662;</a>

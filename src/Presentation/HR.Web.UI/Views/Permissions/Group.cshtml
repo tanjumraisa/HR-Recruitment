@@ -1,0 +1,22 @@
+@using HR.Entities
+@model HR.Web.UI.Controllers.PermissionsController.GroupForm
+@{
+    ViewData["Title"] = Model.Id == 0 ? "New permission group" : "Edit permission group";
+    var all = (List<Permission>)ViewBag.All;
+}
+<h4 class="mb-3">@ViewData["Title"]</h4>
+<form method="post" asp-action="Group">
+    <input type="hidden" asp-for="Id" />
+    <div class="dcard mb-3">
+        <div class="row g-2">
+            <div class="col-md-4"><label class="form-label">Group name</label><input asp-for="Name" class="form-control" maxlength="50" required placeholder="e.g. Leave Officer" /></div>
+            <div class="col-md-8"><label class="form-label">Tag / note</label><input asp-for="Tag" class="form-control" maxlength="500" placeholder="What this group is for" /></div>
+        </div>
+    </div>
+    <div class="dcard mb-3">
+        <h6>Tick what this group may do</h6>
+        <partial name="_Matrix" model="(all, Model.PermissionIds.ToHashSet())" />
+    </div>
+    <button class="btn btn-primary">Save</button>
+    <a asp-action="Index" class="btn btn-link">Cancel</a>
+</form>

@@ -1,0 +1,67 @@
+@using HR.Entities
+@model List<User>
+@{
+    ViewData["Title"] = "User permissions";
+    var groups = (List<HR.Facade.Interface.PermissionGroupSummary>)ViewBag.Groups;
+    var assigned = (Dictionary<int, (HashSet<int> G, HashSet<int> P)>)ViewBag.Assigned;
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">User permissions</h4>
+    <a asp-action="Group" class="btn btn-primary">+ New permission group</a>
+</div>
+<div class="alert alert-info small">
+    <b>How it works:</b> a <b>permission group</b> is a package of ticked screens and buttons (View / Create / Edit / Delete).
+    Give one or more groups to a user. A user with no group keeps the normal access of their role. Admin always has every permission.
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="dcard accent" style="--ac:#7e57c2">
+            <h6>Permission groups</h6>
+            <table class="table table-sm align-middle mb-0">
+                <thead><tr><th>Group</th><th class="text-center">Permissions</th><th class="text-center">Users</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var g in groups)
+                    {
+                        <tr>
+                            <td><b>@g.Name</b><div class="small text-muted">@g.Tag</div></td>
+                            <td class="text-center"><span class="badge rounded-pill" style="background:#7e57c2">@g.Permissions</span></td>
+                            <td class="text-center"><span class="badge rounded-pill" style="background:#26a69a">@g.Users</span></td>
+                            <td class="text-end text-nowrap">
+                                <a asp-action="Group" asp-route-id="@g.PermissionGroupId" class="btn btn-sm btn-outline-secondary">Edit</a>
+                                <form asp-action="DeleteGroup" asp-route-id="@g.PermissionGroupId" method="post" class="d-inline" onsubmit="return confirm('Delete group @g.Name?');">
+                                    <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    @if (!groups.Any()) { <tr><td colspan="4" class="text-muted small">No group yet.</td></tr> }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="dcard accent" style="--ac:#42a5f5">
+            <h6>Users</h6>
+            <table class="table table-sm align-middle mb-0">
+                <thead><tr><th>User</th><th>Role</th><th>Groups</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var u in Model)
+                    {
+                        var a = assigned[u.UserId];
+                        <tr>
+                            <td>@u.FullName<div class="small text-muted">@u.Email</div></td>
+                            <td><span class="badge bg-secondary">@u.Role?.RoleName</span></td>
+                            <td>
+                                @foreach (var g in groups.Where(g => a.G.Contains(g.PermissionGroupId))) { <span class="badge me-1" style="background:#7e57c2">@g.Name</span> }
+                                @if (a.P.Count > 0) { <span class="badge bg-warning text-dark">+@a.P.Count extra</span> }
+                                @if (a.G.Count == 0 && a.P.Count == 0) { <span class="small text-muted">Role access</span> }
+                            </td>
+                            <td class="text-end"><a asp-action="Assign" asp-route-id="@u.UserId" class="btn btn-sm btn-outline-primary">Set permissions</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

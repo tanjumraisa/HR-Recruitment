@@ -14,10 +14,13 @@ builder.Services.AddControllersWithViews(options =>
     options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
     // Every page needs a logged-in user unless it is marked [AllowAnonymous].
     options.Filters.Add(new AuthorizeFilter());
+    // User permission check (Permission / PermissionGroup / UserPermission tables).
+    options.Filters.Add<HR.Web.UI.Filters.PermissionFilter>();
 });
 
 // The logged-in user is passed to the data layer (audit log, status history).
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddMemoryCache();
 builder.Services.AddScoped<HR.DataAccess.Interface.ICurrentUserService, HR.Web.UI.Helpers.HttpCurrentUserService>();
 
 // Dependency injection: DbContext + every Repository and Facade
@@ -53,6 +56,9 @@ using (var scope = app.Services.CreateScope())
     var seed = builder.Configuration.GetSection("SeedAdmin");
     var users = scope.ServiceProvider.GetRequiredService<IUserFacade>();
     await users.EnsureAdminAsync(seed["FullName"] ?? "System Admin", seed["Email"] ?? "admin@hr.local", seed["Password"] ?? "Admin@12345");
+
+    // Every menu screen gets View / Create / Edit / Delete permissions (new screens are added automatically).
+    await scope.ServiceProvider.GetRequiredService<IPermissionFacade>().SyncAsync(HR.Web.UI.Helpers.PermissionCatalog.Build());
 
     // While developing: an empty database gets the demo data automatically (24 employees, attendance, payroll...).
     if (app.Environment.IsDevelopment() && !await db.Employees.AnyAsync())

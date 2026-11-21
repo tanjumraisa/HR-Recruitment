@@ -127,6 +127,7 @@ namespace HR.DataAccess
             modelBuilder.Entity<Employee>()
                 .HasOne(x => x.Branch).WithMany().HasForeignKey(x => x.BranchId);
             ConfigureHrmsModules(modelBuilder);
+            ConfigurePermissions(modelBuilder);
 
             // ---------- Soft delete: hide rows with IsDeleted = true from every query ----------
             foreach (var entityType in modelBuilder.Model.GetEntityTypes().Where(t => typeof(ISoftDelete).IsAssignableFrom(t.ClrType)))
